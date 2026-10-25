@@ -21,20 +21,27 @@ permissions:
 
 jobs:
   build:
-    runs-on: ubuntu-latest
+    # Pinned image: it ships with the Android SDK preinstalled.
+    runs-on: ubuntu-24.04
     steps:
-      - uses: actions/checkout@v4
+      - uses: actions/checkout@v5
 
-      - uses: actions/setup-java@v4
+      - uses: actions/setup-java@v5
         with:
           distribution: temurin
           java-version: '17'
 
-      - uses: android-actions/setup-android@v3
+      - name: Install Gradle 8.11.1
+        run: |
+          curl -sSL -o "$RUNNER_TEMP/gradle.zip" https://services.gradle.org/distributions/gradle-8.11.1-bin.zip
+          unzip -q "$RUNNER_TEMP/gradle.zip" -d "$RUNNER_TEMP"
+          echo "$RUNNER_TEMP/gradle-8.11.1/bin" >> "$GITHUB_PATH"
 
-      - uses: gradle/actions/setup-gradle@v4
-        with:
-          gradle-version: '8.11.1'
+      - name: Check Android SDK
+        run: |
+          echo "ANDROID_HOME=$ANDROID_HOME"
+          ls "$ANDROID_HOME/platforms" || true
+          yes | "$ANDROID_HOME/cmdline-tools/latest/bin/sdkmanager" --licenses > /dev/null || true
 
       - name: Decide version
         env:
@@ -71,12 +78,33 @@ jobs:
           SIGNING_STORE_PASSWORD: ${{ secrets.SIGNING_STORE_PASSWORD }}
           SIGNING_KEY_ALIAS: ${{ secrets.SIGNING_KEY_ALIAS }}
           SIGNING_KEY_PASSWORD: ${{ secrets.SIGNING_KEY_PASSWORD }}
-        run: gradle --no-daemon --stacktrace :app:testReleaseUnitTest :app:assembleRelease
+        run: |
+          set -o pipefail
+          gradle --no-daemon --console=plain :app:testReleaseUnitTest :app:assembleRelease 2>&1 | tee "$RUNNER_TEMP/build.log"
+
+      # Turns compile errors into annotations, so they're readable without opening the full log.
+      - name: Report build errors
+        if: failure()
+        run: |
+          LOG="$RUNNER_TEMP/build.log"
+          [ -f "$LOG" ] || { echo "::error::No build log (a setup step failed)"; exit 0; }
+          python3 - "$LOG" <<'PY'
+          import re, sys
+          lines = open(sys.argv[1], errors="replace").read().splitlines()
+          keep = [l for l in lines if re.search(r"^e: |error:|What went wrong|FAILED|Exception|^> |Caused by|expected:<", l)]
+          if not keep:
+              keep = lines[-60:]
+          keep = keep[:150]
+          def esc(s): return s.replace("%", "%25").replace("\r", "%0D").replace("\n", "%0A")
+          for i in range(0, len(keep), 25):
+              print("::error title=Build errors part %d::%s" % (i // 25 + 1, esc("\n".join(keep[i:i + 25]))))
+          PY
 
       - name: Name the APK
         run: cp app/build/outputs/apk/release/app-release.apk "listo-${VERSION_NAME}.apk"
 
       - uses: actions/upload-artifact@v4
+        continue-on-error: true
         with:
           name: listo-${{ env.VERSION_NAME }}
           path: listo-*.apk
