@@ -1,12 +1,12 @@
-package com.hariv.simpletodo
+package com.hariv.listo
 
 import android.app.Application
 import android.content.Context
-import com.hariv.simpletodo.backup.BackupManager
-import com.hariv.simpletodo.data.AppDatabase
-import com.hariv.simpletodo.data.Prefs
-import com.hariv.simpletodo.data.Repository
-import com.hariv.simpletodo.work.DailyWorker
+import com.hariv.listo.backup.BackupManager
+import com.hariv.listo.data.AppDatabase
+import com.hariv.listo.data.Prefs
+import com.hariv.listo.data.Repository
+import com.hariv.listo.work.DailyWorker
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.SupervisorJob

@@ -1,13 +1,13 @@
-package com.hariv.simpletodo.data
+package com.hariv.listo.data
 
 import android.content.Context
 import android.net.Uri
 import androidx.glance.appwidget.updateAll
 import androidx.room.withTransaction
-import com.hariv.simpletodo.backup.BackupJson
-import com.hariv.simpletodo.backup.BackupManager
-import com.hariv.simpletodo.recurring.Recurrence
-import com.hariv.simpletodo.widget.TodoWidget
+import com.hariv.listo.backup.BackupJson
+import com.hariv.listo.backup.BackupManager
+import com.hariv.listo.recurring.Recurrence
+import com.hariv.listo.widget.TodoWidget
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Job
 import kotlinx.coroutines.delay

@@ -1,4 +1,4 @@
-package com.hariv.simpletodo.ui
+package com.hariv.listo.ui
 
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
@@ -54,12 +54,12 @@ import androidx.compose.ui.text.input.KeyboardCapitalization
 import androidx.compose.ui.text.input.KeyboardType
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.dp
-import com.hariv.simpletodo.App
-import com.hariv.simpletodo.data.Repository
-import com.hariv.simpletodo.data.Rule
-import com.hariv.simpletodo.recurring.Recurrence
-import com.hariv.simpletodo.recurring.RepeatUnit
-import com.hariv.simpletodo.recurring.Schedule
+import com.hariv.listo.App
+import com.hariv.listo.data.Repository
+import com.hariv.listo.data.Rule
+import com.hariv.listo.recurring.Recurrence
+import com.hariv.listo.recurring.RepeatUnit
+import com.hariv.listo.recurring.Schedule
 import kotlinx.coroutines.launch
 import java.time.DayOfWeek
 import java.time.Instant

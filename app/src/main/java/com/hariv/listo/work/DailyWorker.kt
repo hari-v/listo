@@ -1,4 +1,4 @@
-package com.hariv.simpletodo.work
+package com.hariv.listo.work
 
 import android.content.Context
 import androidx.work.CoroutineWorker
@@ -6,7 +6,7 @@ import androidx.work.ExistingPeriodicWorkPolicy
 import androidx.work.PeriodicWorkRequestBuilder
 import androidx.work.WorkManager
 import androidx.work.WorkerParameters
-import com.hariv.simpletodo.App
+import com.hariv.listo.App
 import java.time.Duration
 import java.time.LocalDateTime
 import java.util.concurrent.TimeUnit

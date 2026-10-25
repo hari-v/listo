@@ -74,19 +74,19 @@ jobs:
         run: gradle --no-daemon --stacktrace :app:testReleaseUnitTest :app:assembleRelease
 
       - name: Name the APK
-        run: cp app/build/outputs/apk/release/app-release.apk "simple-todo-${VERSION_NAME}.apk"
+        run: cp app/build/outputs/apk/release/app-release.apk "listo-${VERSION_NAME}.apk"
 
       - uses: actions/upload-artifact@v4
         with:
-          name: simple-todo-${{ env.VERSION_NAME }}
-          path: simple-todo-*.apk
+          name: listo-${{ env.VERSION_NAME }}
+          path: listo-*.apk
 
       - name: Publish GitHub Release
         if: env.IS_RELEASE == 'true'
         env:
           GH_TOKEN: ${{ github.token }}
         run: |
-          gh release create "v${VERSION_NAME}" "simple-todo-${VERSION_NAME}.apk" \
+          gh release create "v${VERSION_NAME}" "listo-${VERSION_NAME}.apk" \
             --target "$GITHUB_SHA" \
-            --title "Simple Todo ${VERSION_NAME}" \
-            --notes "Open this page on your phone and tap simple-todo-${VERSION_NAME}.apk to install. Already installed? Use ⋮ → Check for update in the app."
+            --title "Listo ${VERSION_NAME}" \
+            --notes "Open this page on your phone and tap listo-${VERSION_NAME}.apk to install. Already installed? Use ⋮ → Check for update in the app."

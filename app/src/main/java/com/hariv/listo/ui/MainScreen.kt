@@ -1,4 +1,4 @@
-package com.hariv.simpletodo.ui
+package com.hariv.listo.ui
 
 import androidx.activity.compose.rememberLauncherForActivityResult
 import androidx.activity.result.contract.ActivityResultContracts
@@ -61,15 +61,15 @@ import androidx.compose.ui.text.input.KeyboardCapitalization
 import androidx.compose.ui.text.style.TextDecoration
 import androidx.compose.ui.unit.dp
 import androidx.lifecycle.compose.LifecycleResumeEffect
-import com.hariv.simpletodo.App
-import com.hariv.simpletodo.backup.BackupJson
-import com.hariv.simpletodo.backup.BackupManager
-import com.hariv.simpletodo.backup.BackupStatus
-import com.hariv.simpletodo.backup.OpenBackupFile
-import com.hariv.simpletodo.data.CATEGORIES
-import com.hariv.simpletodo.data.Repository
-import com.hariv.simpletodo.data.Todo
-import com.hariv.simpletodo.update.Updater
+import com.hariv.listo.App
+import com.hariv.listo.backup.BackupJson
+import com.hariv.listo.backup.BackupManager
+import com.hariv.listo.backup.BackupStatus
+import com.hariv.listo.backup.OpenBackupFile
+import com.hariv.listo.data.CATEGORIES
+import com.hariv.listo.data.Repository
+import com.hariv.listo.data.Todo
+import com.hariv.listo.update.Updater
 import kotlinx.coroutines.launch
 
 private const val ALL = "all"
@@ -202,7 +202,7 @@ fun MainScreen(go: (Screen) -> Unit) {
     Scaffold(
         topBar = {
             TopAppBar(
-                title = { Text("Todo") },
+                title = { Text("Listo") },
                 actions = {
                     TextButton(onClick = { go(Screen.Recurring) }) { Text("Recurring") }
                     TextButton(onClick = { go(Screen.Archive) }) { Text("Archive") }
@@ -231,7 +231,7 @@ fun MainScreen(go: (Screen) -> Unit) {
                             DropdownMenuItem(text = { Text("Add widget to home screen") }, onClick = {
                                 pick {
                                     if (!Device.requestPinWidget(context)) {
-                                        toast("Long-press the home screen → Widgets → Simple Todo")
+                                        toast("Long-press the home screen → Widgets → Listo")
                                     }
                                 }
                             })
@@ -271,7 +271,7 @@ fun MainScreen(go: (Screen) -> Unit) {
                     widgetOk = widgetOk,
                     onBattery = { Device.requestBatteryUnrestricted(context) },
                     onWidget = {
-                        if (!Device.requestPinWidget(context)) toast("Long-press the home screen → Widgets → Simple Todo")
+                        if (!Device.requestPinWidget(context)) toast("Long-press the home screen → Widgets → Listo")
                     },
                     onHide = {
                         app.prefs.setupHidden = true
@@ -420,7 +420,7 @@ fun MainScreen(go: (Screen) -> Unit) {
                         UpdateState.UpToDate -> "You have the latest version (${Updater.currentVersion})."
                         UpdateState.NoReleases -> "No releases published yet."
                         is UpdateState.Available -> "Version ${st.release.version} is available (you have ${Updater.currentVersion}). Your todos stay as they are."
-                        is UpdateState.NeedsPermission -> "Turn on \"Allow from this source\" for Simple Todo in the screen that opened, then come back and tap Install."
+                        is UpdateState.NeedsPermission -> "Turn on \"Allow from this source\" for Listo in the screen that opened, then come back and tap Install."
                         UpdateState.Downloading -> "Downloading…"
                         is UpdateState.Failed -> "Couldn't update: ${st.message}"
                     }
@@ -508,8 +508,8 @@ private fun BackupSetupCard(onRestore: () -> Unit, onChooseFolder: () -> Unit) {
                 style = MaterialTheme.typography.bodyMedium,
             )
             Text(
-                "Used this app before? Restore your backup — it's in Documents/TodoBackup/todo-backup.json. " +
-                    "New here? Choose a folder: pick Documents and the app makes a TodoBackup folder inside it.",
+                "Used this app before? Restore your backup — it's in Documents/ListoBackup/listo-backup.json. " +
+                    "New here? Choose a folder: pick Documents and the app makes a ListoBackup folder inside it.",
                 style = MaterialTheme.typography.bodySmall,
             )
             Row(horizontalArrangement = Arrangement.spacedBy(8.dp)) {

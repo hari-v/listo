@@ -16,4 +16,4 @@ local.properties
 *.keystore
 *.p12
 signing/
-todo-backup*.json
+listo-backup*.json

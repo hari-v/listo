@@ -1,4 +1,4 @@
-package com.hariv.simpletodo.ui
+package com.hariv.listo.ui
 
 import android.os.Bundle
 import androidx.activity.ComponentActivity
@@ -42,8 +42,8 @@ import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.text.input.ImeAction
 import androidx.compose.ui.text.input.KeyboardCapitalization
 import androidx.compose.ui.unit.dp
-import com.hariv.simpletodo.App
-import com.hariv.simpletodo.data.Repository
+import com.hariv.listo.App
+import com.hariv.listo.data.Repository
 import kotlinx.coroutines.launch
 
 /** The small "add a todo" sheet opened from the widget's + button, shown over the home screen. */

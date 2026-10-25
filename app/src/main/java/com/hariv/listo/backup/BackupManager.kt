@@ -1,4 +1,4 @@
-package com.hariv.simpletodo.backup
+package com.hariv.listo.backup
 
 import android.app.Activity
 import android.content.Context
@@ -8,20 +8,20 @@ import android.provider.DocumentsContract
 import androidx.activity.result.contract.ActivityResultContract
 import androidx.core.net.toUri
 import androidx.documentfile.provider.DocumentFile
-import com.hariv.simpletodo.data.Prefs
+import com.hariv.listo.data.Prefs
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.withContext
 
 data class BackupStatus(
-    /** e.g. "Documents/TodoBackup", or null when no folder is set up. */
+    /** e.g. "Documents/ListoBackup", or null when no folder is set up. */
     val folderLabel: String?,
     val lastBackupAt: Long,
     val paused: Boolean,
 )
 
-/** Reads and writes todo-backup.json in a folder the user picked (Storage Access Framework). */
+/** Reads and writes listo-backup.json in a folder the user picked (Storage Access Framework). */
 class BackupManager(private val context: Context, private val prefs: Prefs) {
 
     private val _status = MutableStateFlow(currentStatus())
@@ -48,7 +48,7 @@ class BackupManager(private val context: Context, private val prefs: Prefs) {
         refresh()
     }
 
-    /** The TodoBackup folder: the picked folder itself if it is called TodoBackup, else a TodoBackup folder inside it. */
+    /** The ListoBackup folder: the picked folder itself if it is called ListoBackup, else a ListoBackup folder inside it. */
     private fun backupDir(create: Boolean): DocumentFile? {
         val uri = prefs.backupTreeUri?.toUri() ?: return null
         val tree = DocumentFile.fromTreeUri(context, uri) ?: return null
@@ -96,8 +96,8 @@ class BackupManager(private val context: Context, private val prefs: Prefs) {
         runCatching { backupDir(create = false)?.uri }.getOrNull() ?: documentUri("primary:Documents/$DIR_NAME")
 
     companion object {
-        const val DIR_NAME = "TodoBackup"
-        const val FILE_NAME = "todo-backup.json"
+        const val DIR_NAME = "ListoBackup"
+        const val FILE_NAME = "listo-backup.json"
         private const val EXTERNAL_STORAGE = "com.android.externalstorage.documents"
 
         fun documentUri(documentId: String): Uri = DocumentsContract.buildDocumentUri(EXTERNAL_STORAGE, documentId)
@@ -113,7 +113,7 @@ class BackupManager(private val context: Context, private val prefs: Prefs) {
     }
 }
 
-/** Opens the system file picker for todo-backup.json, starting in the given folder. */
+/** Opens the system file picker for listo-backup.json, starting in the given folder. */
 class OpenBackupFile : ActivityResultContract<Uri?, Uri?>() {
     override fun createIntent(context: Context, input: Uri?): Intent =
         Intent(Intent.ACTION_OPEN_DOCUMENT).apply {

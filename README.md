@@ -1,4 +1,4 @@
-# Simple Todo
+# Listo
 
 A personal Android todo app with a full-page home-screen widget. Categories (pw, my, bl), recurring todos, a dated archive and automatic backup to a file on the phone. Works fully offline. Not on the Play Store: GitHub builds it and hosts each release.
 
@@ -6,9 +6,9 @@ This repo holds code only. Your todos live on your phone and in your backup file
 
 ## Install on the phone (first time)
 
-1. On the phone, open this repo's **Releases** page and tap the latest `simple-todo-x.y.z.apk`.
+1. On the phone, open this repo's **Releases** page and tap the latest `listo-x.y.z.apk`.
 2. When Android asks, allow your browser to install apps, then tap **Install**.
-3. Open Simple Todo and follow the setup card: choose the backup folder (pick **Documents**), allow background, add the widget.
+3. Open Listo and follow the setup card: choose the backup folder (pick **Documents**), allow background, add the widget.
 
 ## Updates
 

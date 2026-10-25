@@ -1,4 +1,4 @@
-package com.hariv.simpletodo.recurring
+package com.hariv.listo.recurring
 
 import java.time.DayOfWeek
 import java.time.LocalDate

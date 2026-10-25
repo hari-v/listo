@@ -1,9 +1,9 @@
-package com.hariv.simpletodo.data
+package com.hariv.listo.data
 
 import androidx.room.Entity
 import androidx.room.PrimaryKey
-import com.hariv.simpletodo.recurring.RepeatUnit
-import com.hariv.simpletodo.recurring.Schedule
+import com.hariv.listo.recurring.RepeatUnit
+import com.hariv.listo.recurring.Schedule
 import java.time.LocalDate
 
 /** The fixed category list. Change it here (and only here). */

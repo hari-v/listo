@@ -1,4 +1,4 @@
-package com.hariv.simpletodo.ui
+package com.hariv.listo.ui
 
 import android.appwidget.AppWidgetManager
 import android.content.ComponentName
@@ -20,8 +20,8 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.unit.dp
 import androidx.core.net.toUri
-import com.hariv.simpletodo.data.CATEGORIES
-import com.hariv.simpletodo.widget.TodoWidgetReceiver
+import com.hariv.listo.data.CATEGORIES
+import com.hariv.listo.widget.TodoWidgetReceiver
 import java.time.Instant
 import java.time.LocalDate
 import java.time.ZoneId

@@ -1,11 +1,11 @@
-package com.hariv.simpletodo.widget
+package com.hariv.listo.widget
 
 import android.content.Context
 import androidx.glance.GlanceId
 import androidx.glance.action.ActionParameters
 import androidx.glance.appwidget.action.ActionCallback
 import androidx.glance.appwidget.state.updateAppWidgetState
-import com.hariv.simpletodo.App
+import com.hariv.listo.App
 
 val TodoIdParam = ActionParameters.Key<String>("todoId")
 val FilterParam = ActionParameters.Key<String>("filter")

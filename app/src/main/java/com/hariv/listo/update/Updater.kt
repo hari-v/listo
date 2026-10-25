@@ -1,11 +1,11 @@
-package com.hariv.simpletodo.update
+package com.hariv.listo.update
 
 import android.content.Context
 import android.content.Intent
 import android.provider.Settings
 import androidx.core.content.FileProvider
 import androidx.core.net.toUri
-import com.hariv.simpletodo.BuildConfig
+import com.hariv.listo.BuildConfig
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.withContext
 import org.json.JSONObject
@@ -63,7 +63,7 @@ object Updater {
     suspend fun download(context: Context, release: Release): File = withContext(Dispatchers.IO) {
         val dir = File(context.cacheDir, "updates").apply { mkdirs() }
         dir.listFiles()?.forEach { it.delete() }
-        val file = File(dir, "simple-todo-${release.version}.apk")
+        val file = File(dir, "listo-${release.version}.apk")
         var url = URL(release.apkUrl)
         repeat(5) {
             val conn = (url.openConnection() as HttpURLConnection).apply {

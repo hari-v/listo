@@ -1,4 +1,4 @@
-package com.hariv.simpletodo.ui
+package com.hariv.listo.ui
 
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
@@ -25,8 +25,8 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.dp
-import com.hariv.simpletodo.App
-import com.hariv.simpletodo.data.Todo
+import com.hariv.listo.App
+import com.hariv.listo.data.Todo
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
@@ -100,9 +100,9 @@ fun HelpScreen(back: () -> Unit) {
             HelpItem("Done", "Tick the box. Tick again to undo. × deletes a todo for good.")
             HelpItem("Archive", "Ticked items move to the Archive 7 days after you tick them, or right away with \"Clear completed\". Open it with Archive at the top.")
             HelpItem("Recurring", "Tap Recurring at the top to set up repeating todos (bills, birthdays, quarterly tasks). Each one appears on your list the day before it's due, even if you don't open the app.")
-            HelpItem("Widget", "Long-press an empty home-screen page → Widgets → Simple Todo, then stretch it to fill the page. Or use ⋮ → Add widget to home screen. Tick, filter, add and clear right on the widget; tap a todo to open the app.")
-            HelpItem("Backup", "Every change is saved to Documents/TodoBackup/todo-backup.json (or the folder you chose). The line at the bottom of the main screen shows the last backup.")
-            HelpItem("Restore", "⋮ → Restore from backup, then pick todo-backup.json. On a new phone, copy the TodoBackup folder over first.")
+            HelpItem("Widget", "Long-press an empty home-screen page → Widgets → Listo, then stretch it to fill the page. Or use ⋮ → Add widget to home screen. Tick, filter, add and clear right on the widget; tap a todo to open the app.")
+            HelpItem("Backup", "Every change is saved to Documents/ListoBackup/listo-backup.json (or the folder you chose). The line at the bottom of the main screen shows the last backup.")
+            HelpItem("Restore", "⋮ → Restore from backup, then pick listo-backup.json. On a new phone, copy the ListoBackup folder over first.")
             HelpItem("Samsung battery", "⋮ → Battery: allow background, so recurring todos appear on time.")
             HelpItem("Updates", "⋮ → Check for update installs the newest version from GitHub. Your todos stay.")
         }

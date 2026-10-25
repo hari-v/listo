@@ -14,15 +14,15 @@ fun versionCodeOf(version: String): Int {
 }
 
 // The app checks this repo's GitHub Releases for updates.
-val githubRepo: String = System.getenv("GITHUB_REPOSITORY") ?: "hari-v/simple-todo"
+val githubRepo: String = System.getenv("GITHUB_REPOSITORY") ?: "hari-v/listo"
 val keystorePath: String? = System.getenv("SIGNING_KEYSTORE_PATH")
 
 android {
-    namespace = "com.hariv.simpletodo"
+    namespace = "com.hariv.listo"
     compileSdk = 35
 
     defaultConfig {
-        applicationId = "com.hariv.simpletodo"
+        applicationId = "com.hariv.listo"
         minSdk = 31
         targetSdk = 35
         versionCode = maxOf(1, versionCodeOf(appVersionName))

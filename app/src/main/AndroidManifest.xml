@@ -15,7 +15,7 @@
         android:roundIcon="@mipmap/ic_launcher_round"
         android:label="@string/app_name"
         android:supportsRtl="true"
-        android:theme="@style/Theme.SimpleTodo">
+        android:theme="@style/Theme.Listo">
 
         <activity
             android:name=".ui.MainActivity"
@@ -33,7 +33,7 @@
             android:exported="false"
             android:excludeFromRecents="true"
             android:taskAffinity=""
-            android:theme="@style/Theme.SimpleTodo.Translucent"
+            android:theme="@style/Theme.Listo.Translucent"
             android:windowSoftInputMode="adjustResize|stateVisible" />
 
         <receiver

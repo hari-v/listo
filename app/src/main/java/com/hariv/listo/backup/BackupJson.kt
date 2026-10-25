@@ -1,14 +1,14 @@
-package com.hariv.simpletodo.backup
+package com.hariv.listo.backup
 
-import com.hariv.simpletodo.data.CATEGORIES
-import com.hariv.simpletodo.data.Rule
-import com.hariv.simpletodo.data.Todo
+import com.hariv.listo.data.CATEGORIES
+import com.hariv.listo.data.Rule
+import com.hariv.listo.data.Todo
 import org.json.JSONArray
 import org.json.JSONObject
 
 /** The backup file format: { app, version, savedAt, todos: [...], rules: [...] }. */
 object BackupJson {
-    const val APP = "simple-todo"
+    const val APP = "listo"
     const val VERSION = 1
 
     data class Data(val savedAt: Long, val todos: List<Todo>, val rules: List<Rule>) {
@@ -30,9 +30,9 @@ object BackupJson {
         val root = try {
             JSONObject(text)
         } catch (e: Exception) {
-            throw IllegalArgumentException("That file isn't a Simple Todo backup.")
+            throw IllegalArgumentException("That file isn't a Listo backup.")
         }
-        require(root.optString("app") == APP) { "That file isn't a Simple Todo backup." }
+        require(root.optString("app") == APP) { "That file isn't a Listo backup." }
         require(root.optInt("version", 0) in 1..VERSION) {
             "This backup was made by a newer version of the app. Update the app first."
         }

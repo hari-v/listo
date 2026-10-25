@@ -1,4 +1,4 @@
-package com.hariv.simpletodo.widget
+package com.hariv.listo.widget
 
 import android.content.Context
 import androidx.compose.runtime.Composable
@@ -39,12 +39,12 @@ import androidx.glance.text.FontWeight
 import androidx.glance.text.Text
 import androidx.glance.text.TextDecoration
 import androidx.glance.text.TextStyle
-import com.hariv.simpletodo.App
-import com.hariv.simpletodo.data.CATEGORIES
-import com.hariv.simpletodo.data.Todo
-import com.hariv.simpletodo.ui.Fmt
-import com.hariv.simpletodo.ui.MainActivity
-import com.hariv.simpletodo.ui.QuickAddActivity
+import com.hariv.listo.App
+import com.hariv.listo.data.CATEGORIES
+import com.hariv.listo.data.Todo
+import com.hariv.listo.ui.Fmt
+import com.hariv.listo.ui.MainActivity
+import com.hariv.listo.ui.QuickAddActivity
 
 /** The home-screen widget. Stretch it to fill a whole page. */
 class TodoWidget : GlanceAppWidget() {
@@ -88,7 +88,7 @@ private fun WidgetContent(todos: List<Todo>, filter: String) {
         Row(modifier = GlanceModifier.fillMaxWidth(), verticalAlignment = Alignment.CenterVertically) {
             Column(modifier = GlanceModifier.defaultWeight().clickable(actionStartActivity<MainActivity>())) {
                 Text(
-                    text = "Todo",
+                    text = "Listo",
                     style = TextStyle(fontSize = 18.sp, fontWeight = FontWeight.Bold, color = colors.onSurface),
                 )
                 Text(

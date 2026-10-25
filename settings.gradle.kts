@@ -14,5 +14,5 @@ dependencyResolutionManagement {
     }
 }
 
-rootProject.name = "SimpleTodo"
+rootProject.name = "Listo"
 include(":app")

@@ -1,4 +1,4 @@
-package com.hariv.simpletodo.recurring
+package com.hariv.listo.recurring
 
 import org.junit.Assert.assertEquals
 import org.junit.Assert.assertNull
