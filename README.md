@@ -1,6 +1,6 @@
 # Listo
 
-A personal Android todo app with a full-page home-screen widget. Categories (pw, my, bl), recurring todos, a dated archive and automatic backup to a file on the phone. Works fully offline. Not on the Play Store: GitHub builds it and hosts each release.
+A personal Android todo app with a full-page home-screen widget. Categories (my, bl, pw), recurring todos, a dated archive and automatic backup to a file on the phone. Works fully offline. Not on the Play Store: GitHub builds it and hosts each release.
 
 This repo holds code only. Your todos live on your phone and in your backup file; they are never uploaded anywhere.
 

@@ -35,7 +35,7 @@ fun AppTheme(content: @Composable () -> Unit) {
     MaterialTheme(colorScheme = scheme, content = content)
 }
 
-/** pw / my / bl picker. */
+/** my / bl / pw picker. */
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
 fun CategoryPicker(selected: String, onSelect: (String) -> Unit, modifier: Modifier = Modifier) {

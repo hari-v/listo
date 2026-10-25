@@ -95,8 +95,8 @@ fun HelpScreen(back: () -> Unit) {
                 .padding(16.dp),
             verticalArrangement = Arrangement.spacedBy(14.dp),
         ) {
-            HelpItem("Add", "Type a task, pick pw, my or bl, and tap Add.")
-            HelpItem("Filter", "Tap All, pw, my or bl above the list to show one category. Tap a todo's category label to move it.")
+            HelpItem("Add", "Type a task, pick my, bl or pw, and tap Add.")
+            HelpItem("Filter", "Tap All, my, bl or pw above the list to show one category. Tap a todo's category label to move it.")
             HelpItem("Done", "Tick the box. Tick again to undo. × deletes a todo for good.")
             HelpItem("Archive", "Ticked items move to the Archive 7 days after you tick them, or right away with \"Clear completed\". Open it with Archive at the top.")
             HelpItem("Recurring", "Tap Recurring at the top to set up repeating todos (bills, birthdays, quarterly tasks). Each one appears on your list the day before it's due, even if you don't open the app.")

@@ -7,7 +7,7 @@ import com.hariv.listo.recurring.Schedule
 import java.time.LocalDate
 
 /** The fixed category list. Change it here (and only here). */
-val CATEGORIES = listOf("pw", "my", "bl")
+val CATEGORIES = listOf("my", "bl", "pw")
 
 @Entity(tableName = "todos")
 data class Todo(
