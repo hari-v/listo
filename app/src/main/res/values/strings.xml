@@ -1,0 +1,5 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <string name="app_name">Simple Todo</string>
+    <string name="widget_description">Your todo list on a home-screen page</string>
+</resources>

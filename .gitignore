@@ -1,0 +1,19 @@
+# Build output
+build/
+.gradle/
+.kotlin/
+local.properties
+*.apk
+*.aab
+
+# IDE
+.idea/
+*.iml
+.DS_Store
+
+# Never commit signing keys or personal data
+*.jks
+*.keystore
+*.p12
+signing/
+todo-backup*.json
