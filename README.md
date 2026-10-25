@@ -16,7 +16,7 @@ In the app: **⋮ → Check for update**. It downloads the newest release and in
 
 ## Making a release
 
-GitHub → **Actions** → **Build** → **Run workflow** → enter a version such as `1.0.1` → **Run**. A few minutes later the signed APK appears under Releases. Pushing a tag like `v1.0.1` does the same.
+Change `version.txt` to the new version (e.g. `1.0.1`) and push to `main`. A few minutes later the signed APK appears under Releases. Also works: GitHub → **Actions** → **Build** → **Run workflow** with a version, or pushing a tag like `v1.0.1`.
 
 Every push to `main` also builds a test APK (under the run's Artifacts) to check the code compiles and the tests pass. Test APKs use a throwaway key and can't update an installed release.
 

@@ -1,7 +1,8 @@
 name: Build
 
 # Every push to main: build a test APK (checks the code compiles and the tests pass).
-# Release: push a tag like v1.0.0, or run this workflow by hand with a version number.
+# Release: change version.txt to a new version (e.g. 1.0.1) and push to main.
+# Also works: push a tag like v1.0.1, or run this workflow by hand with a version number.
 # A release is signed with your key and attached to a GitHub Release, where the app's
 # "Check for update" finds it.
 
@@ -46,11 +47,17 @@ jobs:
       - name: Decide version
         env:
           INPUT_VERSION: ${{ github.event.inputs.version }}
+          GH_TOKEN: ${{ github.token }}
         run: |
+          FILE_VERSION="$(tr -d ' \r\n' < version.txt)"
           if [[ "$GITHUB_REF" == refs/tags/v* ]]; then
             VERSION="${GITHUB_REF_NAME#v}"; RELEASE=true
           elif [[ -n "$INPUT_VERSION" ]]; then
             VERSION="${INPUT_VERSION#v}"; RELEASE=true
+          elif [[ "$GITHUB_EVENT_NAME" == push && "$GITHUB_REF" == refs/heads/main ]] \
+               && ! gh release view "v$FILE_VERSION" -R "$GITHUB_REPOSITORY" > /dev/null 2>&1; then
+            # version.txt holds a version that hasn't been released yet: release it.
+            VERSION="$FILE_VERSION"; RELEASE=true
           else
             VERSION="0.0.${GITHUB_RUN_NUMBER}"; RELEASE=false
           fi
