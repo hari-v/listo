@@ -25,6 +25,7 @@ class Repository(
     private val db: AppDatabase,
     private val prefs: Prefs,
     val backup: BackupManager,
+    val categories: CategoryStore,
     private val scope: CoroutineScope,
 ) {
     val activeTodos: Flow<List<Todo>> = db.todos().observeActive().map { sortActive(it) }
@@ -81,6 +82,54 @@ class Repository(
     }
 
     fun newRuleId(): String = newId()
+
+    // ---- Categories ----
+
+    suspend fun addCategory(name: String) {
+        if (categories.problemWith(name) != null) return
+        categories.set(categories.current + CategoryStore.clean(name))
+        changed()
+    }
+
+    /** Renames everywhere, including archived tasks and recurring rules. */
+    suspend fun renameCategory(old: String, new: String) {
+        val clean = CategoryStore.clean(new)
+        if (clean == old || categories.problemWith(clean, renaming = old) != null) return
+        categories.set(categories.current.map { if (it == old) clean else it })
+        db.withTransaction {
+            db.todos().renameCategory(old, clean)
+            db.rules().renameCategory(old, clean)
+        }
+        if (prefs.lastCategory == old) prefs.lastCategory = clean
+        changed()
+    }
+
+    /** Moves a category one place up (-1) or down (+1). */
+    fun moveCategory(name: String, delta: Int) {
+        val list = categories.current.toMutableList()
+        val from = list.indexOf(name)
+        val to = from + delta
+        if (from < 0 || to !in list.indices) return
+        list.removeAt(from)
+        list.add(to, name)
+        categories.set(list)
+        changed()
+    }
+
+    /** Open tasks and recurring rules using a category. */
+    suspend fun categoryUsage(name: String): Pair<Int, Int> =
+        db.todos().countActive(name) to db.rules().count(name)
+
+    /** Deletes a category; its open tasks and rules move to [moveTo]. Archived tasks keep their old label. */
+    suspend fun deleteCategory(name: String, moveTo: String) {
+        if (categories.current.size <= 1 || moveTo == name || moveTo !in categories.current) return
+        categories.set(categories.current - name)
+        db.withTransaction {
+            db.todos().moveActiveCategory(name, moveTo)
+            db.rules().renameCategory(name, moveTo)
+        }
+        changed()
+    }
 
     // ---- Daily maintenance: auto-archive + recurring todos ----
 
@@ -147,7 +196,7 @@ class Repository(
             val existing = backup.readExisting()
             if (existing != null && !existing.isEmpty) return false
         }
-        return backup.write(BackupJson.encode(todos, rules, now()))
+        return backup.write(BackupJson.encode(categories.current, todos, rules, now()))
     }
 
     suspend fun isEmpty(): Boolean = db.todos().all().isEmpty() && db.rules().all().isEmpty()
@@ -156,6 +205,10 @@ class Repository(
 
     /** Replaces everything on the phone with the backup's contents. */
     suspend fun restore(data: BackupJson.Data) {
+        val restoredCategories = data.categories?.takeIf { it.isNotEmpty() }
+            ?: CategoryStore.derive(data.rules.map { it.category } + data.todos.map { it.category }, categories.current)
+        categories.set(restoredCategories)
+        prefs.categoriesReviewed = true
         db.withTransaction {
             db.todos().deleteAll()
             db.rules().deleteAll()

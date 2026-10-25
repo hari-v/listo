@@ -55,6 +55,15 @@ interface TodoDao {
 
     @Query("DELETE FROM todos")
     suspend fun deleteAll()
+
+    @Query("UPDATE todos SET category = :to WHERE category = :from")
+    suspend fun renameCategory(from: String, to: String): Int
+
+    @Query("UPDATE todos SET category = :to WHERE category = :from AND archivedAt IS NULL")
+    suspend fun moveActiveCategory(from: String, to: String): Int
+
+    @Query("SELECT COUNT(*) FROM todos WHERE category = :category AND archivedAt IS NULL")
+    suspend fun countActive(category: String): Int
 }
 
 @Dao
@@ -85,6 +94,12 @@ interface RuleDao {
 
     @Query("DELETE FROM rules")
     suspend fun deleteAll()
+
+    @Query("UPDATE rules SET category = :to WHERE category = :from")
+    suspend fun renameCategory(from: String, to: String): Int
+
+    @Query("SELECT COUNT(*) FROM rules WHERE category = :category")
+    suspend fun count(category: String): Int
 }
 
 @Database(entities = [Todo::class, Rule::class], version = 1, exportSchema = false)

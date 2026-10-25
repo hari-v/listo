@@ -1,25 +1,26 @@
 package com.hariv.listo.backup
 
-import com.hariv.listo.data.CATEGORIES
 import com.hariv.listo.data.Rule
 import com.hariv.listo.data.Todo
 import org.json.JSONArray
 import org.json.JSONObject
 
-/** The backup file format: { app, version, savedAt, todos: [...], rules: [...] }. */
+/** The backup file format: { app, version, savedAt, categories: [...], todos: [...], rules: [...] }. */
 object BackupJson {
     const val APP = "listo"
     const val VERSION = 1
 
-    data class Data(val savedAt: Long, val todos: List<Todo>, val rules: List<Rule>) {
+    /** [categories] is null for backups made before categories were editable (1.0.x). */
+    data class Data(val savedAt: Long, val categories: List<String>?, val todos: List<Todo>, val rules: List<Rule>) {
         val isEmpty get() = todos.isEmpty() && rules.isEmpty()
     }
 
-    fun encode(todos: List<Todo>, rules: List<Rule>, savedAt: Long): String {
+    fun encode(categories: List<String>, todos: List<Todo>, rules: List<Rule>, savedAt: Long): String {
         val root = JSONObject()
         root.put("app", APP)
         root.put("version", VERSION)
         root.put("savedAt", savedAt)
+        root.put("categories", JSONArray(categories))
         root.put("todos", JSONArray().apply { todos.forEach { put(todoToJson(it)) } })
         root.put("rules", JSONArray().apply { rules.forEach { put(ruleToJson(it)) } })
         return root.toString(2)
@@ -38,7 +39,8 @@ object BackupJson {
         }
         val todos = root.optJSONArray("todos")?.let { arr -> (0 until arr.length()).map { todoFromJson(arr.getJSONObject(it)) } }.orEmpty()
         val rules = root.optJSONArray("rules")?.let { arr -> (0 until arr.length()).map { ruleFromJson(arr.getJSONObject(it)) } }.orEmpty()
-        return Data(root.optLong("savedAt", 0L), todos, rules)
+        val categories = root.optJSONArray("categories")?.let { arr -> (0 until arr.length()).map { arr.getString(it) } }
+        return Data(root.optLong("savedAt", 0L), categories, todos, rules)
     }
 
     private fun todoToJson(t: Todo) = JSONObject().apply {
@@ -73,7 +75,7 @@ object BackupJson {
     private fun JSONObject.intOrNull(key: String): Int? = if (isNull(key)) null else getInt(key)
     private fun JSONObject.stringOrNull(key: String): String? = if (isNull(key)) null else getString(key)
 
-    private fun category(value: String) = if (value in CATEGORIES) value else CATEGORIES.first()
+    private fun category(value: String) = value.trim().ifEmpty { "Personal" }
 
     private fun todoFromJson(o: JSONObject) = Todo(
         id = o.getString("id"),

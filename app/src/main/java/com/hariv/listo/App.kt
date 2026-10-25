@@ -4,6 +4,7 @@ import android.app.Application
 import android.content.Context
 import com.hariv.listo.backup.BackupManager
 import com.hariv.listo.data.AppDatabase
+import com.hariv.listo.data.CategoryStore
 import com.hariv.listo.data.Prefs
 import com.hariv.listo.data.Repository
 import com.hariv.listo.work.DailyWorker
@@ -18,7 +19,8 @@ class App : Application() {
     val prefs by lazy { Prefs(this) }
     val db by lazy { AppDatabase.build(this) }
     val backup by lazy { BackupManager(this, prefs) }
-    val repo by lazy { Repository(this, db, prefs, backup, appScope) }
+    val categories by lazy { CategoryStore(prefs) }
+    val repo by lazy { Repository(this, db, prefs, backup, categories, appScope) }
 
     override fun onCreate() {
         super.onCreate()

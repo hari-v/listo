@@ -1,6 +1,6 @@
 # Listo
 
-A personal Android todo app with a full-page home-screen widget. Categories (my, bl, pw), recurring todos, a dated archive and automatic backup to a file on the phone. Works fully offline. Not on the Play Store: GitHub builds it and hosts each release.
+A personal Android todo app with a full-page home-screen widget. Your own categories, recurring tasks, a dated archive and automatic backup to a file on the phone. Works fully offline. Not on the Play Store: GitHub builds it and hosts each release.
 
 This repo holds code only. Your todos live on your phone and in your backup file; they are never uploaded anywhere.
 
@@ -46,4 +46,9 @@ Keep an offline copy of the keystore and passwords. If the key is lost, updates 
 | In-app updates | `.../update/Updater.kt` |
 | Build & release | `.github/workflows/build.yml` |
 
-Categories are set in `data/Entities.kt` (`CATEGORIES`).
+Categories are edited in the app (Settings → Categories) and saved in the backup file. New installs start with Personal and Work.
+
+## Credits
+
+- Typeface: [Hanken Grotesk](https://github.com/marcologous/hanken-grotesk) by Alfredo Marco Pradil, SIL Open Font License 1.1 (`app/src/main/res/font/`).
+- Icons: shapes adapted from [Lucide](https://lucide.dev), ISC License.

@@ -11,13 +11,15 @@ import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
 import androidx.compose.runtime.setValue
 import com.hariv.listo.App
+import com.hariv.listo.ui.theme.ListoTheme
 import kotlinx.coroutines.launch
 
 sealed interface Screen {
-    data object Main : Screen
+    data object Tasks : Screen
     data object Recurring : Screen
-    data class EditRule(val ruleId: String?) : Screen
     data object Archive : Screen
+    data class EditRule(val ruleId: String?) : Screen
+    data object Settings : Screen
     data object Help : Screen
 }
 
@@ -26,13 +28,13 @@ class MainActivity : ComponentActivity() {
         super.onCreate(savedInstanceState)
         enableEdgeToEdge()
         setContent {
-            AppTheme { AppRoot() }
+            ListoTheme { AppRoot() }
         }
     }
 
     override fun onResume() {
         super.onResume()
-        // Catch up on recurring todos and auto-archive whenever the app is opened.
+        // Catch up on recurring tasks and auto-archive whenever the app is opened.
         val app = App.get(this)
         app.appScope.launch { app.repo.runMaintenance() }
     }
@@ -40,22 +42,24 @@ class MainActivity : ComponentActivity() {
 
 @Composable
 private fun AppRoot() {
-    var screen by remember { mutableStateOf<Screen>(Screen.Main) }
-    val go: (Screen) -> Unit = { screen = it }
-
-    val parent: Screen? = when (screen) {
-        Screen.Main -> null
-        is Screen.EditRule -> Screen.Recurring
-        else -> Screen.Main
+    // Tabs reset the stack; other screens open on top of the current one.
+    var stack by remember { mutableStateOf(listOf<Screen>(Screen.Tasks)) }
+    val go: (Screen) -> Unit = { screen ->
+        stack = when (screen) {
+            Screen.Tasks -> listOf(Screen.Tasks)
+            Screen.Recurring, Screen.Archive -> listOf(Screen.Tasks, screen)
+            else -> stack + screen
+        }
     }
-    BackHandler(enabled = parent != null) { parent?.let { screen = it } }
-    val back: () -> Unit = { parent?.let { screen = it } }
+    val back: () -> Unit = { if (stack.size > 1) stack = stack.dropLast(1) }
+    BackHandler(enabled = stack.size > 1) { back() }
 
-    when (val s = screen) {
-        Screen.Main -> MainScreen(go)
-        Screen.Recurring -> RecurringScreen(go, back)
-        is Screen.EditRule -> RuleEditorScreen(s.ruleId, back)
-        Screen.Archive -> ArchiveScreen(back)
+    when (val screen = stack.last()) {
+        Screen.Tasks -> TasksScreen(go)
+        Screen.Recurring -> RecurringScreen(go)
+        Screen.Archive -> ArchiveScreen(go)
+        is Screen.EditRule -> RuleEditorScreen(screen.ruleId, back)
+        Screen.Settings -> SettingsScreen(go, back)
         Screen.Help -> HelpScreen(back)
     }
 }

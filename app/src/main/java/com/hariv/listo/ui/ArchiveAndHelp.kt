@@ -1,118 +1,115 @@
 package com.hariv.listo.ui
 
-import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
+import androidx.compose.foundation.layout.PaddingValues
+import androidx.compose.foundation.layout.Row
+import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.fillMaxSize
+import androidx.compose.foundation.layout.fillMaxWidth
+import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
+import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.lazy.LazyColumn
-import androidx.compose.foundation.lazy.items
-import androidx.compose.foundation.rememberScrollState
-import androidx.compose.foundation.verticalScroll
-import androidx.compose.material3.ExperimentalMaterial3Api
-import androidx.compose.material3.HorizontalDivider
-import androidx.compose.material3.ListItem
+import androidx.compose.foundation.lazy.itemsIndexed
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Scaffold
 import androidx.compose.material3.Text
-import androidx.compose.material3.TopAppBar
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.remember
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.graphics.vector.ImageVector
 import androidx.compose.ui.platform.LocalContext
-import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.dp
 import com.hariv.listo.App
 import com.hariv.listo.data.Todo
+import com.hariv.listo.ui.theme.ListoIcons
 
-@OptIn(ExperimentalMaterial3Api::class)
 @Composable
-fun ArchiveScreen(back: () -> Unit) {
+fun ArchiveScreen(go: (Screen) -> Unit) {
     val context = LocalContext.current
     val app = remember { App.get(context) }
     val archived by app.repo.archivedTodos.collectAsState(initial = null)
+    val categories by app.repo.categories.list.collectAsState()
 
     Scaffold(
-        topBar = { TopAppBar(title = { Text("Archive") }, navigationIcon = { BackButton(back) }) },
+        containerColor = MaterialTheme.colorScheme.background,
+        bottomBar = { ListoNavBar(Screen.Archive, go) },
     ) { padding ->
-        val list = archived
-        when {
-            list == null -> Unit
-            list.isEmpty() -> Box(
-                modifier = Modifier.fillMaxSize().padding(padding).padding(24.dp),
-                contentAlignment = Alignment.Center,
-            ) {
-                Text(
-                    "Nothing archived yet.\n\nTicked items move here 7 days after you tick them, " +
-                        "or right away with \"Clear completed\".",
-                    textAlign = TextAlign.Center,
-                    color = MaterialTheme.colorScheme.onSurfaceVariant,
-                )
-            }
-            else -> LazyColumn(Modifier.fillMaxSize().padding(padding)) {
-                item {
-                    Text(
-                        "${list.size} archived, newest first. View only.",
-                        style = MaterialTheme.typography.bodySmall,
-                        color = MaterialTheme.colorScheme.onSurfaceVariant,
-                        modifier = Modifier.padding(horizontal = 16.dp, vertical = 8.dp),
-                    )
+        Column(Modifier.fillMaxSize().padding(padding)) {
+            PageHeader("Archive", "Done tasks move here 7 days after you tick them. View only.")
+            val list = archived
+            when {
+                list == null -> Unit
+                list.isEmpty() -> Box(Modifier.fillMaxSize(), contentAlignment = Alignment.Center) {
+                    EmptyState(ListoIcons.Archive, "Nothing archived yet", "Tick a task and tap Clear completed, or wait 7 days.")
                 }
-                items(list, key = { it.id }) { todo ->
-                    ListItem(
-                        headlineContent = { Text(todo.text) },
-                        supportingContent = { Text(archiveLine(todo)) },
-                    )
-                    HorizontalDivider()
+                else -> {
+                    // Already newest first; group by the month each task was archived.
+                    val byMonth = list.groupBy { Fmt.monthYear(it.archivedAt ?: 0L) }
+                    LazyColumn(
+                        modifier = Modifier.fillMaxSize(),
+                        contentPadding = PaddingValues(start = 16.dp, end = 16.dp, bottom = 24.dp),
+                    ) {
+                        byMonth.forEach { (month, items) ->
+                            item(key = "month-$month") { SectionLabel("$month (${items.size})") }
+                            itemsIndexed(items, key = { _, t -> t.id }) { index, todo ->
+                                GroupRow(index, items.size, dividerInset = 16.dp) { ArchiveRow(todo, categories) }
+                            }
+                        }
+                    }
                 }
             }
         }
     }
 }
 
-/** "pw · Done 18 Oct 09:15 · Archived 25 Oct 10:42 · Auto" */
-private fun archiveLine(t: Todo): String = buildList {
-    add(t.category)
-    t.completedAt?.let { add("Done ${Fmt.dateTime(it)}") }
-    t.archivedAt?.let { add("Archived ${Fmt.dateTime(it)}") }
-    add(if (t.archivedBy == "auto") "Auto" else "Cleared")
-}.joinToString(" · ")
+@Composable
+private fun ArchiveRow(todo: Todo, categories: List<String>) {
+    val scheme = MaterialTheme.colorScheme
+    Column(Modifier.fillMaxWidth().padding(horizontal = 16.dp, vertical = 12.dp)) {
+        Text(todo.text, style = MaterialTheme.typography.bodyLarge)
+        Spacer(Modifier.height(4.dp))
+        Row(verticalAlignment = Alignment.CenterVertically) {
+            CategoryTag(categories, todo.category)
+            Spacer(Modifier.width(12.dp))
+            todo.archivedAt?.let {
+                val how = if (todo.archivedBy == "auto") "Archived automatically" else "Cleared"
+                Text("$how ${Fmt.dateTime(it)}", style = MaterialTheme.typography.labelMedium, color = scheme.onSurfaceVariant)
+            }
+        }
+        todo.completedAt?.let {
+            Text("Done ${Fmt.dateTime(it)}", style = MaterialTheme.typography.labelMedium, color = scheme.outline, modifier = Modifier.padding(top = 2.dp))
+        }
+    }
+}
 
-@OptIn(ExperimentalMaterial3Api::class)
 @Composable
 fun HelpScreen(back: () -> Unit) {
-    Scaffold(
-        topBar = { TopAppBar(title = { Text("How it works") }, navigationIcon = { BackButton(back) }) },
-    ) { padding ->
-        Column(
-            modifier = Modifier
-                .fillMaxSize()
-                .padding(padding)
-                .verticalScroll(rememberScrollState())
-                .padding(16.dp),
-            verticalArrangement = Arrangement.spacedBy(14.dp),
-        ) {
-            HelpItem("Add", "Type a task, pick my, bl or pw, and tap Add.")
-            HelpItem("Filter", "Tap All, my, bl or pw above the list to show one category. Tap a todo's category label to move it.")
-            HelpItem("Done", "Tick the box. Tick again to undo. × deletes a todo for good.")
-            HelpItem("Archive", "Ticked items move to the Archive 7 days after you tick them, or right away with \"Clear completed\". Open it with Archive at the top.")
-            HelpItem("Recurring", "Tap Recurring at the top to set up repeating todos (bills, birthdays, quarterly tasks). Each one appears on your list the day before it's due, even if you don't open the app.")
-            HelpItem("Widget", "Long-press an empty home-screen page → Widgets → Listo, then stretch it to fill the page. Or use ⋮ → Add widget to home screen. Tick, filter, add and clear right on the widget; tap a todo to open the app.")
-            HelpItem("Backup", "Every change is saved to Documents/ListoBackup/listo-backup.json (or the folder you chose). The line at the bottom of the main screen shows the last backup.")
-            HelpItem("Restore", "⋮ → Restore from backup, then pick listo-backup.json. On a new phone, copy the ListoBackup folder over first.")
-            HelpItem("Samsung battery", "⋮ → Battery: allow background, so recurring todos appear on time.")
-            HelpItem("Updates", "⋮ → Check for update installs the newest version from GitHub. Your todos stay.")
+    val topics: List<Triple<ImageVector, String, String>> = listOf(
+        Triple(ListoIcons.Tasks, "Add and tick tasks", "Type in the bar at the bottom, pick a category, and tap the arrow. Tick the circle when it's done; tick again to undo. The × deletes a task for good."),
+        Triple(ListoIcons.Settings, "Categories", "Tap a category under a task to move it. Add, rename, reorder or delete categories in Settings."),
+        Triple(ListoIcons.Archive, "Archive", "Ticked tasks move to the Archive 7 days after you tick them, or straight away with Clear completed."),
+        Triple(ListoIcons.Repeat, "Recurring tasks", "Bills, birthdays, quarterly reviews: set them up under Recurring. Each one appears on your list the day before it's due, even if you don't open the app."),
+        Triple(ListoIcons.Widget, "Home-screen widget", "Long-press an empty home-screen page, tap Widgets, then Listo, and stretch it to fill the page. Tick, filter, add and clear right on the widget."),
+        Triple(ListoIcons.Save, "Backup", "Every change is saved to Documents/ListoBackup/listo-backup.json, or the folder you chose. Settings shows the last backup."),
+        Triple(ListoIcons.Restore, "Restore", "Settings, then Restore from backup, and pick listo-backup.json. On a new phone, copy the ListoBackup folder across first."),
+        Triple(ListoIcons.Battery, "Samsung battery", "Settings, then Run in background, so recurring tasks appear on time."),
+        Triple(ListoIcons.Update, "Updates", "Settings, then Check for update, installs the newest version from GitHub. Your tasks stay."),
+    )
+    Scaffold(containerColor = MaterialTheme.colorScheme.background) { padding ->
+        Column(Modifier.fillMaxSize().padding(padding)) {
+            PageHeader("How Listo works", onBack = back)
+            LazyColumn(contentPadding = PaddingValues(start = 16.dp, end = 16.dp, top = 16.dp, bottom = 32.dp)) {
+                itemsIndexed(topics) { index, (icon, title, body) ->
+                    GroupRow(index, topics.size, dividerInset = 56.dp) {
+                        InfoRow(icon = icon, title = title, value = body)
+                    }
+                }
+            }
         }
-    }
-}
-
-@Composable
-private fun HelpItem(title: String, body: String) {
-    Column {
-        Text(title, style = MaterialTheme.typography.titleSmall)
-        Text(body, style = MaterialTheme.typography.bodyMedium)
     }
 }

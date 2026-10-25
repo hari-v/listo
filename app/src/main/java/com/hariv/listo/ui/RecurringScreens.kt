@@ -1,48 +1,50 @@
 package com.hariv.listo.ui
 
+import androidx.compose.foundation.BorderStroke
+import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.ExperimentalLayoutApi
-import androidx.compose.foundation.layout.FlowRow
 import androidx.compose.foundation.layout.PaddingValues
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.consumeWindowInsets
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
+import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.imePadding
 import androidx.compose.foundation.layout.padding
+import androidx.compose.foundation.layout.size
+import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.lazy.LazyColumn
-import androidx.compose.foundation.lazy.items
+import androidx.compose.foundation.lazy.itemsIndexed
 import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.text.KeyboardOptions
 import androidx.compose.foundation.verticalScroll
-import androidx.compose.material.icons.Icons
-import androidx.compose.material.icons.automirrored.filled.ArrowBack
-import androidx.compose.material.icons.filled.Add
 import androidx.compose.material3.AlertDialog
 import androidx.compose.material3.Button
-import androidx.compose.material3.Card
 import androidx.compose.material3.DatePicker
 import androidx.compose.material3.DatePickerDialog
+import androidx.compose.material3.DropdownMenu
+import androidx.compose.material3.DropdownMenuItem
 import androidx.compose.material3.ExperimentalMaterial3Api
 import androidx.compose.material3.ExtendedFloatingActionButton
-import androidx.compose.material3.FilterChip
 import androidx.compose.material3.Icon
 import androidx.compose.material3.IconButton
 import androidx.compose.material3.MaterialTheme
+import androidx.compose.material3.OutlinedButton
 import androidx.compose.material3.OutlinedTextField
+import androidx.compose.material3.OutlinedTextFieldDefaults
 import androidx.compose.material3.Scaffold
+import androidx.compose.material3.Surface
 import androidx.compose.material3.Text
 import androidx.compose.material3.TextButton
-import androidx.compose.material3.TopAppBar
 import androidx.compose.material3.rememberDatePickerState
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.getValue
-import androidx.compose.runtime.mutableIntStateOf
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
 import androidx.compose.runtime.saveable.rememberSaveable
@@ -52,7 +54,6 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.text.input.KeyboardCapitalization
 import androidx.compose.ui.text.input.KeyboardType
-import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.dp
 import com.hariv.listo.App
 import com.hariv.listo.data.Repository
@@ -60,6 +61,8 @@ import com.hariv.listo.data.Rule
 import com.hariv.listo.recurring.Recurrence
 import com.hariv.listo.recurring.RepeatUnit
 import com.hariv.listo.recurring.Schedule
+import com.hariv.listo.ui.theme.ListoIcons
+import com.hariv.listo.ui.theme.categoryColor
 import kotlinx.coroutines.launch
 import java.time.DayOfWeek
 import java.time.Instant
@@ -70,56 +73,49 @@ import java.time.format.TextStyle
 import java.util.Locale
 
 @Composable
-fun BackButton(onBack: () -> Unit) {
-    IconButton(onClick = onBack) {
-        Icon(Icons.AutoMirrored.Filled.ArrowBack, contentDescription = "Back")
-    }
-}
-
-@OptIn(ExperimentalMaterial3Api::class)
-@Composable
-fun RecurringScreen(go: (Screen) -> Unit, back: () -> Unit) {
+fun RecurringScreen(go: (Screen) -> Unit) {
     val context = LocalContext.current
     val app = remember { App.get(context) }
     val rules by app.repo.rules.collectAsState(initial = null)
+    val categories by app.repo.categories.list.collectAsState()
     var toDelete by remember { mutableStateOf<Rule?>(null) }
 
     Scaffold(
-        topBar = { TopAppBar(title = { Text("Recurring") }, navigationIcon = { BackButton(back) }) },
+        containerColor = MaterialTheme.colorScheme.background,
+        bottomBar = { ListoNavBar(Screen.Recurring, go) },
         floatingActionButton = {
             ExtendedFloatingActionButton(
                 onClick = { go(Screen.EditRule(null)) },
-                icon = { Icon(Icons.Filled.Add, contentDescription = null) },
-                text = { Text("Add rule") },
+                containerColor = MaterialTheme.colorScheme.primary,
+                contentColor = MaterialTheme.colorScheme.onPrimary,
+                icon = { Icon(ListoIcons.Plus, contentDescription = null) },
+                text = { Text("New rule") },
             )
         },
     ) { padding ->
-        val list = rules
-        when {
-            list == null -> Unit
-            list.isEmpty() -> Box(
-                modifier = Modifier.fillMaxSize().padding(padding).padding(24.dp),
-                contentAlignment = Alignment.Center,
-            ) {
-                Text(
-                    "No recurring todos yet.\n\nTap \"Add rule\" for things like bills or birthdays. " +
-                        "Each one appears on your list the day before it's due.",
-                    textAlign = TextAlign.Center,
-                    color = MaterialTheme.colorScheme.onSurfaceVariant,
-                )
-            }
-            else -> LazyColumn(
-                modifier = Modifier.fillMaxSize().padding(padding),
-                contentPadding = PaddingValues(start = 16.dp, top = 8.dp, end = 16.dp, bottom = 96.dp),
-                verticalArrangement = Arrangement.spacedBy(8.dp),
-            ) {
-                items(list, key = { it.id }) { rule ->
-                    RuleCard(
-                        rule = rule,
-                        onEdit = { go(Screen.EditRule(rule.id)) },
-                        onPause = { app.appScope.launch { app.repo.setRulePaused(rule.id, !rule.paused) } },
-                        onDelete = { toDelete = rule },
-                    )
+        Column(Modifier.fillMaxSize().padding(padding)) {
+            PageHeader("Recurring", "Each one appears on your list the day before it's due.")
+            val list = rules
+            when {
+                list == null -> Unit
+                list.isEmpty() -> Box(Modifier.fillMaxSize(), contentAlignment = Alignment.Center) {
+                    EmptyState(ListoIcons.Repeat, "No recurring tasks", "Add bills, birthdays, quarterly reviews, anything that repeats.")
+                }
+                else -> LazyColumn(
+                    modifier = Modifier.fillMaxSize(),
+                    contentPadding = PaddingValues(start = 16.dp, end = 16.dp, top = 16.dp, bottom = 96.dp),
+                ) {
+                    itemsIndexed(list, key = { _, r -> r.id }) { index, rule ->
+                        GroupRow(index, list.size, Modifier.animateItem(), dividerInset = 16.dp) {
+                            RuleRow(
+                                rule = rule,
+                                categories = categories,
+                                onEdit = { go(Screen.EditRule(rule.id)) },
+                                onPause = { app.appScope.launch { app.repo.setRulePaused(rule.id, !rule.paused) } },
+                                onDelete = { toDelete = rule },
+                            )
+                        }
+                    }
                 }
             }
         }
@@ -129,7 +125,7 @@ fun RecurringScreen(go: (Screen) -> Unit, back: () -> Unit) {
         AlertDialog(
             onDismissRequest = { toDelete = null },
             title = { Text("Delete \"${rule.text}\"?") },
-            text = { Text("It stops repeating. Todos it already created stay on your list.") },
+            text = { Text("It stops repeating. Tasks it already added stay on your list.") },
             confirmButton = {
                 TextButton(onClick = {
                     toDelete = null
@@ -142,29 +138,55 @@ fun RecurringScreen(go: (Screen) -> Unit, back: () -> Unit) {
 }
 
 @Composable
-private fun RuleCard(rule: Rule, onEdit: () -> Unit, onPause: () -> Unit, onDelete: () -> Unit) {
+private fun RuleRow(rule: Rule, categories: List<String>, onEdit: () -> Unit, onPause: () -> Unit, onDelete: () -> Unit) {
+    val scheme = MaterialTheme.colorScheme
     val schedule = remember(rule) { runCatching { rule.schedule() }.getOrNull() }
     val next = remember(rule) { schedule?.let { Recurrence.nextDue(it, rule.lastDue()) } }
-    Card(modifier = Modifier.fillMaxWidth()) {
-        Column(Modifier.padding(start = 16.dp, top = 12.dp, end = 8.dp, bottom = 4.dp)) {
-            Text(rule.text, style = MaterialTheme.typography.titleMedium)
+    var menu by remember { mutableStateOf(false) }
+    Row(
+        verticalAlignment = Alignment.CenterVertically,
+        modifier = Modifier.fillMaxWidth().clickable(onClick = onEdit).padding(start = 16.dp, end = 4.dp, top = 14.dp, bottom = 14.dp),
+    ) {
+        Column(Modifier.weight(1f)) {
+            Text(rule.text, style = MaterialTheme.typography.bodyLarge, color = if (rule.paused) scheme.onSurfaceVariant else scheme.onSurface)
             Text(
-                "${rule.category} · ${schedule?.let { Recurrence.describe(it) } ?: "Schedule can't be read"}",
+                schedule?.let { Recurrence.describe(it) } ?: "This schedule can't be read. Edit it to fix.",
                 style = MaterialTheme.typography.bodyMedium,
+                color = scheme.onSurfaceVariant,
             )
-            Text(
-                text = when {
-                    rule.paused -> "Paused"
-                    next != null -> "Next due ${Fmt.shortDate(next)} · on your list from ${Fmt.shortDate(next.minusDays(1))}"
-                    else -> ""
-                },
-                style = MaterialTheme.typography.bodySmall,
-                color = MaterialTheme.colorScheme.onSurfaceVariant,
-            )
-            Row {
-                TextButton(onClick = onEdit) { Text("Edit") }
-                TextButton(onClick = onPause) { Text(if (rule.paused) "Resume" else "Pause") }
-                TextButton(onClick = onDelete) { Text("Delete") }
+            Spacer(Modifier.height(6.dp))
+            Row(verticalAlignment = Alignment.CenterVertically) {
+                CategoryTag(categories, rule.category)
+                Spacer(Modifier.width(14.dp))
+                if (rule.paused) {
+                    Icon(ListoIcons.Pause, contentDescription = null, tint = scheme.outline, modifier = Modifier.size(12.dp))
+                    Spacer(Modifier.width(5.dp))
+                    Text("Paused", style = MaterialTheme.typography.labelMedium, color = scheme.outline)
+                } else if (next != null) {
+                    Icon(ListoIcons.Calendar, contentDescription = null, tint = scheme.tertiary, modifier = Modifier.size(13.dp))
+                    Spacer(Modifier.width(5.dp))
+                    Text("Next due ${Fmt.shortDate(next)}", style = MaterialTheme.typography.labelMedium, color = scheme.tertiary)
+                }
+            }
+        }
+        Box {
+            IconButton(onClick = { menu = true }) { Icon(ListoIcons.More, contentDescription = "More options") }
+            DropdownMenu(expanded = menu, onDismissRequest = { menu = false }) {
+                DropdownMenuItem(
+                    text = { Text("Edit") },
+                    leadingIcon = { Icon(ListoIcons.Pencil, null, modifier = Modifier.size(18.dp)) },
+                    onClick = { menu = false; onEdit() },
+                )
+                DropdownMenuItem(
+                    text = { Text(if (rule.paused) "Resume" else "Pause") },
+                    leadingIcon = { Icon(if (rule.paused) ListoIcons.Play else ListoIcons.Pause, null, modifier = Modifier.size(18.dp)) },
+                    onClick = { menu = false; onPause() },
+                )
+                DropdownMenuItem(
+                    text = { Text("Delete") },
+                    leadingIcon = { Icon(ListoIcons.Trash, null, modifier = Modifier.size(18.dp)) },
+                    onClick = { menu = false; onDelete() },
+                )
             }
         }
     }
@@ -177,15 +199,16 @@ fun RuleEditorScreen(ruleId: String?, back: () -> Unit) {
     val app = remember { App.get(context) }
     val repo = app.repo
     val today = remember { LocalDate.now() }
+    val categories by repo.categories.list.collectAsState()
 
     var existing by remember { mutableStateOf<Rule?>(null) }
     var text by rememberSaveable { mutableStateOf("") }
-    var category by rememberSaveable { mutableStateOf(app.prefs.lastCategory) }
+    var categoryChoice by rememberSaveable { mutableStateOf(repo.categories.defaultCategory()) }
     var unit by rememberSaveable { mutableStateOf(RepeatUnit.MONTH.key) }
     var everyText by rememberSaveable { mutableStateOf("1") }
-    var weekday by rememberSaveable { mutableIntStateOf(today.dayOfWeek.value) }
+    var weekday by rememberSaveable { mutableStateOf(today.dayOfWeek.value.toString()) }
     var dayText by rememberSaveable { mutableStateOf("1") }
-    var month by rememberSaveable { mutableIntStateOf(today.monthValue) }
+    var month by rememberSaveable { mutableStateOf(today.monthValue.toString()) }
     var startIso by rememberSaveable { mutableStateOf(today.toString()) }
     var showDatePicker by remember { mutableStateOf(false) }
 
@@ -194,43 +217,46 @@ fun RuleEditorScreen(ruleId: String?, back: () -> Unit) {
             repo.getRule(ruleId)?.let { r ->
                 existing = r
                 text = r.text
-                category = r.category
+                categoryChoice = r.category
                 unit = r.unit
                 everyText = r.every.toString()
-                r.weekday?.let { weekday = it }
+                r.weekday?.let { weekday = it.toString() }
                 r.day?.let { dayText = it.toString() }
-                r.month?.let { month = it }
+                r.month?.let { month = it.toString() }
                 startIso = r.startDate
             }
         }
     }
 
+    // A rule may use a category that was since renamed away; show it but let the user pick a current one.
+    val category = categoryChoice
     val repeat = RepeatUnit.of(unit)
+    val monthNumber = month.toIntOrNull()?.coerceIn(1, 12) ?: 1
     val every: Int? = if (repeat == RepeatUnit.YEAR) 1 else everyText.toIntOrNull()
     val day: Int? = dayText.toIntOrNull()
     val start = runCatching { LocalDate.parse(startIso) }.getOrDefault(today)
     val error: String? = when {
-        text.isBlank() -> "Enter what to do."
-        every == null || every !in 1..99 -> "\"Every\" must be a number from 1 to 99."
-        repeat != RepeatUnit.WEEK && (day == null || day !in 1..31) -> "Day must be a number from 1 to 31."
-        repeat == RepeatUnit.YEAR && day != null && day > Month.of(month).maxLength() ->
-            "${monthName(month)} has at most ${Month.of(month).maxLength()} days."
+        text.isBlank() -> "Describe the task."
+        every == null || every !in 1..99 -> "\"Every\" needs a number from 1 to 99."
+        repeat != RepeatUnit.WEEK && (day == null || day !in 1..31) -> "The day needs a number from 1 to 31."
+        repeat == RepeatUnit.YEAR && day != null && day > Month.of(monthNumber).maxLength() ->
+            "${monthName(monthNumber)} has at most ${Month.of(monthNumber).maxLength()} days."
         else -> null
     }
     val schedule: Schedule? = if (error == null && every != null) {
         Schedule(
             unit = repeat,
             every = every,
-            weekday = if (repeat == RepeatUnit.WEEK) weekday else null,
+            weekday = if (repeat == RepeatUnit.WEEK) weekday.toIntOrNull() ?: 1 else null,
             day = if (repeat == RepeatUnit.WEEK) null else day,
-            month = if (repeat == RepeatUnit.YEAR) month else null,
+            month = if (repeat == RepeatUnit.YEAR) monthNumber else null,
             startDate = start,
         )
     } else {
         null
     }
-    // New rules never create todos for dates already past; edited rules keep their history.
-    val createdUpTo: LocalDate? = existing?.lastDue() ?: today.minusDays(1)
+    // New rules never add tasks for dates already past; edited rules keep their history.
+    val createdUpTo: LocalDate = existing?.lastDue() ?: today.minusDays(1)
     val preview = schedule?.let { Recurrence.upcoming(it, createdUpTo, 3) }.orEmpty()
 
     fun save() {
@@ -246,7 +272,7 @@ fun RuleEditorScreen(ruleId: String?, back: () -> Unit) {
             day = s.day,
             month = s.month,
             startDate = start.toString(),
-            lastDueDate = base?.lastDueDate ?: createdUpTo?.toString(),
+            lastDueDate = base?.lastDueDate ?: createdUpTo.toString(),
             paused = base?.paused ?: false,
             createdAt = base?.createdAt ?: System.currentTimeMillis(),
         )
@@ -254,115 +280,150 @@ fun RuleEditorScreen(ruleId: String?, back: () -> Unit) {
         back()
     }
 
-    Scaffold(
-        topBar = {
-            TopAppBar(
-                title = { Text(if (ruleId == null) "New recurring todo" else "Edit recurring todo") },
-                navigationIcon = { BackButton(back) },
-            )
-        },
-    ) { padding ->
+    val fieldColors = OutlinedTextFieldDefaults.colors(
+        focusedContainerColor = MaterialTheme.colorScheme.surface,
+        unfocusedContainerColor = MaterialTheme.colorScheme.surface,
+        unfocusedBorderColor = MaterialTheme.colorScheme.outlineVariant,
+        focusedBorderColor = MaterialTheme.colorScheme.primary,
+    )
+
+    Scaffold(containerColor = MaterialTheme.colorScheme.background) { padding ->
         Column(
             modifier = Modifier
                 .fillMaxSize()
                 .padding(padding)
                 .consumeWindowInsets(padding)
-                .imePadding()
-                .verticalScroll(rememberScrollState())
-                .padding(16.dp),
-            verticalArrangement = Arrangement.spacedBy(12.dp),
+                .imePadding(),
         ) {
-            OutlinedTextField(
-                value = text,
-                onValueChange = { text = it.take(Repository.MAX_TEXT) },
-                label = { Text("What to do (e.g. Pay electricity bill)") },
-                keyboardOptions = KeyboardOptions(capitalization = KeyboardCapitalization.Sentences),
-                modifier = Modifier.fillMaxWidth(),
-            )
-
-            Label("Category")
-            CategoryPicker(selected = category, onSelect = { category = it })
-
-            Label("Repeats")
-            Row(horizontalArrangement = Arrangement.spacedBy(6.dp)) {
-                FilterChip(selected = repeat == RepeatUnit.WEEK, onClick = { unit = RepeatUnit.WEEK.key }, label = { Text("Weeks") })
-                FilterChip(selected = repeat == RepeatUnit.MONTH, onClick = { unit = RepeatUnit.MONTH.key }, label = { Text("Months") })
-                FilterChip(selected = repeat == RepeatUnit.YEAR, onClick = { unit = RepeatUnit.YEAR.key }, label = { Text("Year") })
-            }
-
-            if (repeat != RepeatUnit.YEAR) {
-                val unitWord = if (repeat == RepeatUnit.WEEK) "weeks" else "months"
+            PageHeader(if (ruleId == null) "New recurring task" else "Edit recurring task", onBack = back)
+            Column(
+                modifier = Modifier
+                    .weight(1f)
+                    .verticalScroll(rememberScrollState())
+                    .padding(horizontal = 20.dp),
+            ) {
+                FormLabel("Task")
                 OutlinedTextField(
-                    value = everyText,
-                    onValueChange = { v -> everyText = v.filter { it.isDigit() }.take(2) },
-                    label = { Text("Every how many $unitWord?") },
-                    supportingText = {
-                        Text(if (repeat == RepeatUnit.WEEK) "1 = every week, 2 = every other week" else "1 = monthly, 3 = quarterly, 6 = twice a year")
-                    },
-                    singleLine = true,
-                    keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Number),
+                    value = text,
+                    onValueChange = { text = it.take(Repository.MAX_TEXT) },
+                    placeholder = { Text("e.g. Pay electricity bill") },
+                    keyboardOptions = KeyboardOptions(capitalization = KeyboardCapitalization.Sentences),
+                    shape = MaterialTheme.shapes.medium,
+                    colors = fieldColors,
                     modifier = Modifier.fillMaxWidth(),
                 )
-            }
 
-            when (repeat) {
-                RepeatUnit.WEEK -> {
-                    Label("On")
-                    FlowRow(horizontalArrangement = Arrangement.spacedBy(6.dp)) {
-                        (1..7).forEach { d ->
-                            FilterChip(
-                                selected = weekday == d,
-                                onClick = { weekday = d },
-                                label = { Text(DayOfWeek.of(d).getDisplayName(TextStyle.SHORT, Locale.ENGLISH)) },
-                            )
+                FormLabel("Category")
+                val categoryOptions = if (category in categories) categories else categories + category
+                ChoiceRow(
+                    options = categoryOptions,
+                    selected = category,
+                    onSelect = { categoryChoice = it },
+                    dotColor = { categoryColor(categories, it) },
+                )
+
+                FormLabel("Repeats")
+                ChoiceRow(
+                    options = listOf(RepeatUnit.WEEK.key, RepeatUnit.MONTH.key, RepeatUnit.YEAR.key),
+                    selected = repeat.key,
+                    onSelect = { unit = it },
+                    label = {
+                        when (RepeatUnit.of(it)) {
+                            RepeatUnit.WEEK -> "Weekly"
+                            RepeatUnit.MONTH -> "Monthly"
+                            RepeatUnit.YEAR -> "Yearly"
                         }
-                    }
-                }
-                RepeatUnit.MONTH -> DayField(dayText, "Day of the month (1–31)") { dayText = it }
-                RepeatUnit.YEAR -> {
-                    Label("Month")
-                    FlowRow(horizontalArrangement = Arrangement.spacedBy(6.dp)) {
-                        (1..12).forEach { m ->
-                            FilterChip(selected = month == m, onClick = { month = m }, label = { Text(monthName(m)) })
-                        }
-                    }
-                    DayField(dayText, "Day (1–31)") { dayText = it }
-                }
-            }
+                    },
+                )
 
-            Row(verticalAlignment = Alignment.CenterVertically, modifier = Modifier.fillMaxWidth()) {
-                Column(Modifier.weight(1f)) {
-                    Text("Starting from ${Fmt.longDate(start)}", style = MaterialTheme.typography.bodyMedium)
-                    Text(
-                        "For quarterly bills, pick the date of the first one.",
-                        style = MaterialTheme.typography.bodySmall,
-                        color = MaterialTheme.colorScheme.onSurfaceVariant,
-                    )
-                }
-                TextButton(onClick = { showDatePicker = true }) { Text("Change") }
-            }
-
-            Card(modifier = Modifier.fillMaxWidth()) {
-                Column(Modifier.padding(16.dp), verticalArrangement = Arrangement.spacedBy(4.dp)) {
-                    if (error != null) {
-                        Text(error, color = MaterialTheme.colorScheme.error)
-                    } else if (schedule != null) {
-                        Text(Recurrence.describe(schedule), style = MaterialTheme.typography.titleSmall)
-                        Text("Next due: " + preview.joinToString(", ") { Fmt.shortDate(it) })
+                if (repeat != RepeatUnit.YEAR) {
+                    FormLabel("Every")
+                    Row(verticalAlignment = Alignment.CenterVertically) {
+                        NumberField(everyText, { everyText = it }, fieldColors, Modifier.width(96.dp))
+                        Spacer(Modifier.width(12.dp))
                         Text(
-                            "Each one appears on your list the day before it's due.",
-                            style = MaterialTheme.typography.bodySmall,
-                            color = MaterialTheme.colorScheme.onSurfaceVariant,
+                            if (repeat == RepeatUnit.WEEK) "week(s)" else "month(s)",
+                            style = MaterialTheme.typography.bodyLarge,
                         )
                     }
+                    Hint(if (repeat == RepeatUnit.WEEK) "2 means every other week." else "3 means quarterly, 6 means twice a year.")
                 }
+
+                when (repeat) {
+                    RepeatUnit.WEEK -> {
+                        FormLabel("On")
+                        ChoiceRow(
+                            options = (1..7).map { it.toString() },
+                            selected = weekday,
+                            onSelect = { weekday = it },
+                            label = { DayOfWeek.of(it.toInt()).getDisplayName(TextStyle.SHORT, Locale.ENGLISH) },
+                        )
+                    }
+                    RepeatUnit.MONTH -> {
+                        FormLabel("Day of the month")
+                        NumberField(dayText, { dayText = it }, fieldColors, Modifier.width(96.dp))
+                        Hint("29 to 31 fall on the last day of shorter months.")
+                    }
+                    RepeatUnit.YEAR -> {
+                        FormLabel("Month")
+                        ChoiceRow(
+                            options = (1..12).map { it.toString() },
+                            selected = monthNumber.toString(),
+                            onSelect = { month = it },
+                            label = { monthName(it.toInt()) },
+                        )
+                        FormLabel("Day")
+                        NumberField(dayText, { dayText = it }, fieldColors, Modifier.width(96.dp))
+                        Hint("A 29 February birthday shows on 28 February in other years.")
+                    }
+                }
+
+                FormLabel("Starting from")
+                Surface(
+                    onClick = { showDatePicker = true },
+                    shape = MaterialTheme.shapes.medium,
+                    color = MaterialTheme.colorScheme.surface,
+                    border = BorderStroke(1.dp, MaterialTheme.colorScheme.outlineVariant),
+                    modifier = Modifier.fillMaxWidth(),
+                ) {
+                    Row(verticalAlignment = Alignment.CenterVertically, modifier = Modifier.padding(horizontal = 16.dp, vertical = 14.dp)) {
+                        Icon(ListoIcons.Calendar, contentDescription = null, tint = MaterialTheme.colorScheme.onSurfaceVariant, modifier = Modifier.size(20.dp))
+                        Spacer(Modifier.width(14.dp))
+                        Text(Fmt.longDate(start), style = MaterialTheme.typography.bodyLarge, modifier = Modifier.weight(1f))
+                        Text("Change", style = MaterialTheme.typography.labelLarge, color = MaterialTheme.colorScheme.primary)
+                    }
+                }
+                Hint("For a quarterly bill, pick the date of the first one.")
+
+                Spacer(Modifier.height(20.dp))
+                Surface(
+                    shape = MaterialTheme.shapes.medium,
+                    color = if (error != null) MaterialTheme.colorScheme.errorContainer else MaterialTheme.colorScheme.tertiaryContainer,
+                    modifier = Modifier.fillMaxWidth(),
+                ) {
+                    Column(Modifier.padding(16.dp), verticalArrangement = Arrangement.spacedBy(4.dp)) {
+                        if (error != null) {
+                            Text(error, style = MaterialTheme.typography.bodyMedium, color = MaterialTheme.colorScheme.onErrorContainer)
+                        } else if (schedule != null) {
+                            val ink = MaterialTheme.colorScheme.onTertiaryContainer
+                            Text(Recurrence.describe(schedule), style = MaterialTheme.typography.titleSmall, color = ink)
+                            Text("Next due " + preview.joinToString(", ") { Fmt.shortDate(it) }, style = MaterialTheme.typography.bodyMedium, color = ink)
+                            Text("Each one appears on your list the day before.", style = MaterialTheme.typography.bodySmall, color = ink.copy(alpha = 0.8f))
+                        }
+                    }
+                }
+                Spacer(Modifier.height(24.dp))
             }
 
-            Row(horizontalArrangement = Arrangement.spacedBy(8.dp)) {
-                Button(onClick = { save() }, enabled = error == null) { Text("Save") }
-                TextButton(onClick = back) { Text("Cancel") }
+            Row(
+                horizontalArrangement = Arrangement.spacedBy(12.dp),
+                modifier = Modifier.fillMaxWidth().padding(horizontal = 20.dp, vertical = 12.dp),
+            ) {
+                OutlinedButton(onClick = back, modifier = Modifier.weight(1f).height(48.dp)) { Text("Cancel") }
+                Button(onClick = { save() }, enabled = error == null, modifier = Modifier.weight(1f).height(48.dp)) {
+                    Text(if (ruleId == null) "Add rule" else "Save changes")
+                }
             }
-            Spacer(Modifier.padding(bottom = 24.dp))
         }
     }
 
@@ -378,7 +439,7 @@ fun RuleEditorScreen(ruleId: String?, back: () -> Unit) {
                         startIso = Instant.ofEpochMilli(ms).atZone(ZoneOffset.UTC).toLocalDate().toString()
                     }
                     showDatePicker = false
-                }) { Text("OK") }
+                }) { Text("Set date") }
             },
             dismissButton = { TextButton(onClick = { showDatePicker = false }) { Text("Cancel") } },
         ) {
@@ -388,20 +449,40 @@ fun RuleEditorScreen(ruleId: String?, back: () -> Unit) {
 }
 
 @Composable
-private fun Label(text: String) {
-    Text(text, style = MaterialTheme.typography.labelLarge)
+private fun FormLabel(text: String) {
+    Text(
+        text,
+        style = MaterialTheme.typography.titleSmall,
+        color = MaterialTheme.colorScheme.onSurfaceVariant,
+        modifier = Modifier.padding(top = 22.dp, bottom = 8.dp),
+    )
 }
 
 @Composable
-private fun DayField(value: String, label: String, onChange: (String) -> Unit) {
+private fun Hint(text: String) {
+    Text(
+        text,
+        style = MaterialTheme.typography.bodySmall,
+        color = MaterialTheme.colorScheme.onSurfaceVariant,
+        modifier = Modifier.padding(top = 6.dp),
+    )
+}
+
+@Composable
+private fun NumberField(
+    value: String,
+    onChange: (String) -> Unit,
+    colors: androidx.compose.material3.TextFieldColors,
+    modifier: Modifier = Modifier,
+) {
     OutlinedTextField(
         value = value,
         onValueChange = { v -> onChange(v.filter { it.isDigit() }.take(2)) },
-        label = { Text(label) },
-        supportingText = { Text("29–31: shorter months use their last day") },
         singleLine = true,
         keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Number),
-        modifier = Modifier.fillMaxWidth(),
+        shape = MaterialTheme.shapes.medium,
+        colors = colors,
+        modifier = modifier,
     )
 }
 
