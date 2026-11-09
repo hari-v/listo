@@ -34,8 +34,14 @@ bounds_of() { # $1 = grep -E pattern for the node; prints "x1 y1 x2 y2" of the l
 # Tap the last on-screen element whose text or description is exactly $1.
 # With $2 = "left", tap just left of it instead (where a task's check circle sits).
 tap() {
-  local b
-  b=$(bounds_of "(text|content-desc)=\"$1\"")
+  local b try
+  for try in 1 2 3; do
+    b=$(bounds_of "(text|content-desc)=\"$1\"")
+    # Fall back to elements whose label contains the text (merged labels like "New rule").
+    [ -z "$b" ] && b=$(bounds_of "(text|content-desc)=\"[^\"]*$1[^\"]*\"")
+    [ -n "$b" ] && break
+    sleep 1
+  done
   if [ -z "$b" ]; then
     log "could not find \"$1\" on screen"
     return 1

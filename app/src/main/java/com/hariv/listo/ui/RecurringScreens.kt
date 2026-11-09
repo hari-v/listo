@@ -145,7 +145,12 @@ fun RecurringScreen(go: (Screen) -> Unit) {
 private fun RuleRow(rule: Rule, categories: List<String>, onEdit: () -> Unit, onPause: () -> Unit, onDelete: () -> Unit) {
     val scheme = MaterialTheme.colorScheme
     val schedule = remember(rule) { runCatching { rule.schedule() }.getOrNull() }
-    val next = remember(rule) { schedule?.let { Recurrence.nextDue(it, rule.lastDue()) } }
+    // The next due date from today on (a rule's last date can lag if the daily job hasn't run yet).
+    val next = remember(rule) {
+        val yesterday = LocalDate.now().minusDays(1)
+        val after = rule.lastDue()?.let { if (it.isAfter(yesterday)) it else yesterday } ?: yesterday
+        schedule?.let { Recurrence.nextDue(it, after) }
+    }
     var menu by remember { mutableStateOf(false) }
     val tone = categoryTone(categories, rule.category)
     Row(
@@ -186,7 +191,7 @@ private fun RuleRow(rule: Rule, categories: List<String>, onEdit: () -> Unit, on
                 } else if (next != null) {
                     Icon(ListoIcons.Calendar, contentDescription = null, tint = scheme.onSurfaceVariant, modifier = Modifier.size(13.dp))
                     Spacer(Modifier.width(5.dp))
-                    Text("Next due ${Fmt.shortDate(next)}", style = MaterialTheme.typography.labelMedium, color = scheme.onSurfaceVariant)
+                    Text("Next due ${Fmt.dueDate(next)}", style = MaterialTheme.typography.labelMedium, color = scheme.onSurfaceVariant)
                 }
             }
         }

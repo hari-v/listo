@@ -12,6 +12,7 @@ import androidx.compose.foundation.background
 import androidx.compose.foundation.border
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.horizontalScroll
+import androidx.compose.foundation.isSystemInDarkTheme
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
@@ -113,22 +114,23 @@ fun dueText(iso: String, today: LocalDate): String = when (dueState(iso, today))
     DueState.Later -> "Due ${Fmt.shortDate(iso)}"
 }
 
-/** Repeat icon and due date, amber when due tomorrow, red when due today or overdue. */
+/** Small badge with a repeat icon and the due date: amber when due tomorrow, red when due today or overdue. */
 @Composable
 fun DueLabel(iso: String, today: LocalDate, done: Boolean = false) {
-    val scheme = MaterialTheme.colorScheme
-    val color = when {
-        done -> scheme.onSurfaceVariant
-        else -> when (dueState(iso, today)) {
-            DueState.Overdue, DueState.Today -> scheme.error
-            DueState.Tomorrow -> scheme.tertiary
-            DueState.Later -> scheme.onSurfaceVariant
-        }
+    val dark = isSystemInDarkTheme()
+    val state = if (done) DueState.Later else dueState(iso, today)
+    val (fg, bg) = when (state) {
+        DueState.Overdue, DueState.Today -> if (dark) Color(0xFFFFB4AB) to Color(0xFF4A1612) else Color(0xFFC42B23) to Color(0xFFFDE4E2)
+        DueState.Tomorrow -> if (dark) Color(0xFFFFC48C) to Color(0xFF43270A) else Color(0xFF9A4508) to Color(0xFFFFEBD9)
+        DueState.Later -> if (dark) Color(0xFFA6ACBA) to Color(0xFF262A32) else Color(0xFF555B69) to Color(0xFFEEF0F4)
     }
-    Row(verticalAlignment = Alignment.CenterVertically) {
-        Icon(ListoIcons.Repeat, contentDescription = "Repeats", tint = color, modifier = Modifier.size(13.dp))
-        Spacer(Modifier.width(5.dp))
-        Text(dueText(iso, today), style = MaterialTheme.typography.labelMedium, color = color)
+    Row(
+        verticalAlignment = Alignment.CenterVertically,
+        modifier = Modifier.clip(RoundedCornerShape(6.dp)).background(bg).padding(horizontal = 6.dp, vertical = 1.dp),
+    ) {
+        Icon(ListoIcons.Repeat, contentDescription = "Repeats", tint = fg, modifier = Modifier.size(12.dp))
+        Spacer(Modifier.width(4.dp))
+        Text(dueText(iso, today), style = MaterialTheme.typography.labelMedium.copy(fontWeight = FontWeight.SemiBold), color = fg)
     }
 }
 
@@ -436,6 +438,10 @@ object Fmt {
     /** "Nov 1" */
     fun shortDate(date: LocalDate): String = date.format(shortDate)
     fun shortDate(iso: String): String = runCatching { shortDate(LocalDate.parse(iso)) }.getOrDefault(iso)
+
+    /** "Nov 1", or "Nov 1, 2027" when it's not this year. */
+    fun dueDate(date: LocalDate, today: LocalDate = LocalDate.now()): String =
+        if (date.year == today.year) shortDate(date) else "${shortDate(date)}, ${date.year}"
 
     /** "Sun 25 Oct 2026" */
     fun longDate(date: LocalDate): String = date.format(longDate)

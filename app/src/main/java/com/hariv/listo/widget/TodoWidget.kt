@@ -18,8 +18,6 @@ import androidx.glance.LocalSize
 import androidx.glance.action.actionParametersOf
 import androidx.glance.action.actionStartActivity
 import androidx.glance.action.clickable
-import androidx.glance.appwidget.CheckBox
-import androidx.glance.appwidget.CheckboxDefaults
 import androidx.glance.appwidget.GlanceAppWidget
 import androidx.glance.appwidget.GlanceAppWidgetReceiver
 import androidx.glance.appwidget.SizeMode
@@ -121,7 +119,7 @@ private val ChipBackground = DayNightColor(LightScheme.surfaceContainerHigh, Dar
 private val Hairline = DayNightColor(LightScheme.outlineVariant, DarkScheme.outlineVariant)
 
 /** Rough width of a chip at 14sp, used to show only the chips that fit on one line. */
-private fun chipWidth(label: String, hasDot: Boolean): Dp = (24f + label.length * 8.4f + (if (hasDot) 13f else 0f) + 6f).dp
+private fun chipWidth(label: String, hasDot: Boolean): Dp = (20f + label.length * 6.8f + (if (hasDot) 13f else 0f) + 4f).dp
 
 @Composable
 private fun WidgetContent(todos: List<Todo>, categories: List<String>, filter: String, today: LocalDate) {
@@ -131,7 +129,7 @@ private fun WidgetContent(todos: List<Todo>, categories: List<String>, filter: S
     val visible = if (filter == TodoWidget.ALL) todos else todos.filter { it.category == filter }
 
     // Chips that fit between the app mark and the + button.
-    var room = size.width - 20.dp - 32.dp - 48.dp
+    var room = size.width - 20.dp - 32.dp - 42.dp
     val chips = buildList {
         val all = "All ${openTasks.size}"
         add(Triple(TodoWidget.ALL, all, false))
@@ -224,13 +222,13 @@ private fun WidgetContent(todos: List<Todo>, categories: List<String>, filter: S
 private fun Chip(label: String, value: String, selected: String, tone: WidgetTone, hasDot: Boolean) {
     val colors = GlanceTheme.colors
     val isSelected = value == selected
-    Box(modifier = GlanceModifier.padding(end = 6.dp)) {
+    Box(modifier = GlanceModifier.padding(end = 4.dp)) {
         Row(
             verticalAlignment = Alignment.CenterVertically,
             modifier = GlanceModifier
                 .background(if (isSelected) tone.fill else ChipBackground)
                 .cornerRadius(16.dp)
-                .padding(horizontal = 12.dp, vertical = 7.dp)
+                .padding(horizontal = 10.dp, vertical = 7.dp)
                 .clickable(actionRunCallback<SetFilterAction>(actionParametersOf(FilterParam to value))),
         ) {
             if (hasDot) {
@@ -256,14 +254,37 @@ private fun TodoRow(todo: Todo, categories: List<String>, today: LocalDate) {
     val tone = toneFor(categories, todo.category)
     Column(modifier = GlanceModifier.fillMaxWidth()) {
         Row(
-            modifier = GlanceModifier.fillMaxWidth().padding(end = 6.dp, top = 1.dp, bottom = 1.dp),
+            modifier = GlanceModifier.fillMaxWidth().padding(end = 6.dp, top = 3.dp, bottom = 3.dp),
             verticalAlignment = Alignment.CenterVertically,
         ) {
-            CheckBox(
-                checked = todo.done,
-                onCheckedChange = actionRunCallback<ToggleAction>(actionParametersOf(TodoIdParam to todo.id)),
-                colors = CheckboxDefaults.colors(checkedColor = tone.strong, uncheckedColor = tone.strong),
-            )
+            Box(
+                contentAlignment = Alignment.Center,
+                modifier = GlanceModifier
+                    .size(44.dp)
+                    .clickable(actionRunCallback<ToggleAction>(actionParametersOf(TodoIdParam to todo.id))),
+            ) {
+                if (todo.done) {
+                    Image(
+                        provider = ImageProvider(R.drawable.ic_check_fill),
+                        contentDescription = "Done. Tap to undo.",
+                        colorFilter = ColorFilter.tint(tone.strong),
+                        modifier = GlanceModifier.size(22.dp),
+                    )
+                    Image(
+                        provider = ImageProvider(R.drawable.ic_check_mark),
+                        contentDescription = null,
+                        colorFilter = ColorFilter.tint(tone.onFill),
+                        modifier = GlanceModifier.size(22.dp),
+                    )
+                } else {
+                    Image(
+                        provider = ImageProvider(R.drawable.ic_check_ring),
+                        contentDescription = "Mark done",
+                        colorFilter = ColorFilter.tint(tone.strong),
+                        modifier = GlanceModifier.size(22.dp),
+                    )
+                }
+            }
             Column(modifier = GlanceModifier.defaultWeight().clickable(actionStartActivity<MainActivity>())) {
                 Text(
                     todo.text,
@@ -292,7 +313,7 @@ private fun TodoRow(todo: Todo, categories: List<String>, today: LocalDate) {
             }
         }
         // Hairline between rows, aligned with the text.
-        Box(modifier = GlanceModifier.fillMaxWidth().padding(start = 48.dp)) {
+        Box(modifier = GlanceModifier.fillMaxWidth().padding(start = 44.dp)) {
             Box(modifier = GlanceModifier.fillMaxWidth().height(1.dp).background(Hairline)) {}
         }
     }
