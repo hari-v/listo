@@ -6,7 +6,9 @@ import androidx.work.ExistingPeriodicWorkPolicy
 import androidx.work.PeriodicWorkRequestBuilder
 import androidx.work.WorkManager
 import androidx.work.WorkerParameters
+import androidx.glance.appwidget.updateAll
 import com.hariv.listo.App
+import com.hariv.listo.widget.TodoWidget
 import java.time.Duration
 import java.time.LocalDateTime
 import java.util.concurrent.TimeUnit
@@ -22,6 +24,8 @@ class DailyWorker(context: Context, params: WorkerParameters) : CoroutineWorker(
         return try {
             repo.runMaintenance()
             repo.flushBackup()
+            // Refresh "Due tomorrow" / "Due today" labels on the widget after midnight.
+            runCatching { TodoWidget().updateAll(applicationContext) }
             Result.success()
         } catch (e: Exception) {
             Result.retry()

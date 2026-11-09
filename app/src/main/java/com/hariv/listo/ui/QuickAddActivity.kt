@@ -68,7 +68,7 @@ class QuickAddActivity : ComponentActivity() {
 }
 
 @Composable
-private fun QuickAddSheet(onClose: () -> Unit) {
+internal fun QuickAddSheet(onClose: () -> Unit) {
     val context = LocalContext.current
     val app = remember { App.get(context) }
     val categories by app.repo.categories.list.collectAsState()

@@ -51,12 +51,15 @@ import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.Shape
 import androidx.compose.ui.graphics.vector.ImageVector
 import androidx.compose.ui.semantics.Role
+import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.Dp
 import androidx.compose.ui.unit.dp
 import androidx.core.net.toUri
 import com.hariv.listo.ui.theme.ListoIcons
+import com.hariv.listo.ui.theme.Tone
 import com.hariv.listo.ui.theme.categoryColor
+import com.hariv.listo.ui.theme.categoryTone
 import com.hariv.listo.widget.TodoWidgetReceiver
 import java.time.Instant
 import java.time.LocalDate
@@ -66,12 +69,10 @@ import java.util.Locale
 
 // ---------- Small shared building blocks ----------
 
-/** Round check circle with a 48dp touch target. */
+/** Round check circle in the task's category colour, with a 48dp touch target. */
 @Composable
-fun RoundCheck(checked: Boolean, onToggle: () -> Unit, modifier: Modifier = Modifier) {
-    val scheme = MaterialTheme.colorScheme
-    val fill by animateColorAsState(if (checked) scheme.primary else Color.Transparent, label = "check-fill")
-    val ring by animateColorAsState(if (checked) scheme.primary else scheme.outline, label = "check-ring")
+fun RoundCheck(checked: Boolean, onToggle: () -> Unit, tone: Tone, modifier: Modifier = Modifier) {
+    val fill by animateColorAsState(if (checked) tone.strong else Color.Transparent, label = "check-fill")
     Box(
         modifier = modifier
             .size(48.dp)
@@ -84,11 +85,50 @@ fun RoundCheck(checked: Boolean, onToggle: () -> Unit, modifier: Modifier = Modi
                 .size(22.dp)
                 .clip(CircleShape)
                 .background(fill)
-                .border(1.5.dp, ring, CircleShape),
+                .border(2.dp, tone.strong, CircleShape),
             contentAlignment = Alignment.Center,
         ) {
-            if (checked) Icon(ListoIcons.Check, contentDescription = null, tint = scheme.onPrimary, modifier = Modifier.size(13.dp))
+            if (checked) Icon(ListoIcons.Check, contentDescription = null, tint = tone.onFill, modifier = Modifier.size(13.dp))
         }
+    }
+}
+
+/** Where a recurring task's due date stands relative to today. */
+enum class DueState { Later, Tomorrow, Today, Overdue }
+
+fun dueState(iso: String, today: LocalDate): DueState {
+    val due = runCatching { LocalDate.parse(iso) }.getOrNull() ?: return DueState.Later
+    return when {
+        due.isBefore(today) -> DueState.Overdue
+        due == today -> DueState.Today
+        due == today.plusDays(1) -> DueState.Tomorrow
+        else -> DueState.Later
+    }
+}
+
+fun dueText(iso: String, today: LocalDate): String = when (dueState(iso, today)) {
+    DueState.Overdue -> "Overdue since ${Fmt.shortDate(iso)}"
+    DueState.Today -> "Due today"
+    DueState.Tomorrow -> "Due tomorrow"
+    DueState.Later -> "Due ${Fmt.shortDate(iso)}"
+}
+
+/** Repeat icon and due date, amber when due tomorrow, red when due today or overdue. */
+@Composable
+fun DueLabel(iso: String, today: LocalDate, done: Boolean = false) {
+    val scheme = MaterialTheme.colorScheme
+    val color = when {
+        done -> scheme.onSurfaceVariant
+        else -> when (dueState(iso, today)) {
+            DueState.Overdue, DueState.Today -> scheme.error
+            DueState.Tomorrow -> scheme.tertiary
+            DueState.Later -> scheme.onSurfaceVariant
+        }
+    }
+    Row(verticalAlignment = Alignment.CenterVertically) {
+        Icon(ListoIcons.Repeat, contentDescription = "Repeats", tint = color, modifier = Modifier.size(13.dp))
+        Spacer(Modifier.width(5.dp))
+        Text(dueText(iso, today), style = MaterialTheme.typography.labelMedium, color = color)
     }
 }
 
@@ -109,9 +149,10 @@ fun CategoryTag(categories: List<String>, name: String, onPick: ((String) -> Uni
                 .then(if (onPick != null) Modifier.clickable { expanded = true } else Modifier)
                 .padding(vertical = 2.dp, horizontal = 2.dp),
         ) {
-            CategoryDot(categoryColor(categories, name), 7.dp)
+            val tone = categoryTone(categories, name)
+            CategoryDot(tone.strong, 7.dp)
             Spacer(Modifier.width(6.dp))
-            Text(name, style = MaterialTheme.typography.labelMedium, color = MaterialTheme.colorScheme.onSurfaceVariant)
+            Text(name, style = MaterialTheme.typography.labelMedium.copy(fontWeight = FontWeight.SemiBold), color = tone.text)
         }
         if (onPick != null) {
             DropdownMenu(expanded = expanded, onDismissRequest = { expanded = false }) {
@@ -179,6 +220,7 @@ fun ChoiceRow(
     label: (String) -> String = { it },
     count: ((String) -> Int)? = null,
     dotColor: @Composable (String) -> Color? = { null },
+    tone: @Composable (String) -> Tone? = { null },
     contentPadding: PaddingValues = PaddingValues(0.dp),
 ) {
     Row(
@@ -188,11 +230,15 @@ fun ChoiceRow(
         options.forEach { option ->
             val isSelected = option == selected
             val scheme = MaterialTheme.colorScheme
+            // A selected chip fills with its category's colour, or cobalt when it has none.
+            val optionTone = tone(option)
+            val fill = optionTone?.fill ?: scheme.primary
+            val onFill = optionTone?.onFill ?: scheme.onPrimary
             Surface(
                 onClick = { onSelect(option) },
                 shape = CircleShape,
-                color = if (isSelected) scheme.primary else Color.Transparent,
-                contentColor = if (isSelected) scheme.onPrimary else scheme.onSurface,
+                color = if (isSelected) fill else scheme.surface,
+                contentColor = if (isSelected) onFill else scheme.onSurface,
                 border = if (isSelected) null else BorderStroke(1.dp, scheme.outlineVariant),
             ) {
                 Row(
@@ -200,7 +246,7 @@ fun ChoiceRow(
                     modifier = Modifier.height(36.dp).padding(horizontal = 14.dp),
                 ) {
                     dotColor(option)?.let {
-                        CategoryDot(it)
+                        CategoryDot(if (isSelected) onFill else it)
                         Spacer(Modifier.width(8.dp))
                     }
                     Text(label(option), style = MaterialTheme.typography.labelLarge)
@@ -208,8 +254,8 @@ fun ChoiceRow(
                         Spacer(Modifier.width(6.dp))
                         Text(
                             c(option).toString(),
-                            style = MaterialTheme.typography.labelLarge,
-                            color = if (isSelected) scheme.onPrimary.copy(alpha = 0.7f) else scheme.onSurfaceVariant,
+                            style = MaterialTheme.typography.labelLarge.copy(fontWeight = FontWeight.Normal),
+                            color = if (isSelected) onFill.copy(alpha = 0.75f) else scheme.onSurfaceVariant,
                         )
                     }
                 }
@@ -291,10 +337,18 @@ fun InfoRow(
         modifier = Modifier
             .fillMaxWidth()
             .then(if (onClick != null) Modifier.clickable(onClick = onClick) else Modifier)
-            .padding(start = 16.dp, end = 8.dp, top = 12.dp, bottom = 12.dp),
+            .padding(start = 14.dp, end = 8.dp, top = 10.dp, bottom = 10.dp),
     ) {
-        Icon(icon, contentDescription = null, tint = MaterialTheme.colorScheme.onSurfaceVariant, modifier = Modifier.size(22.dp))
-        Spacer(Modifier.width(18.dp))
+        Box(
+            contentAlignment = Alignment.Center,
+            modifier = Modifier
+                .size(36.dp)
+                .clip(RoundedCornerShape(10.dp))
+                .background(MaterialTheme.colorScheme.primaryContainer),
+        ) {
+            Icon(icon, contentDescription = null, tint = MaterialTheme.colorScheme.onPrimaryContainer, modifier = Modifier.size(19.dp))
+        }
+        Spacer(Modifier.width(14.dp))
         Column(Modifier.weight(1f)) {
             Text(title, style = MaterialTheme.typography.bodyLarge)
             value?.let { Text(it, style = MaterialTheme.typography.bodySmall, color = MaterialTheme.colorScheme.onSurfaceVariant) }
@@ -326,9 +380,9 @@ fun ListoNavBar(current: Screen, go: (Screen) -> Unit) {
         HorizontalDivider(thickness = 1.dp, color = MaterialTheme.colorScheme.outlineVariant.copy(alpha = 0.6f))
         NavigationBar(containerColor = MaterialTheme.colorScheme.surface, tonalElevation = 0.dp) {
             val colors = NavigationBarItemDefaults.colors(
-                selectedIconColor = MaterialTheme.colorScheme.onSurface,
+                selectedIconColor = MaterialTheme.colorScheme.onPrimaryContainer,
                 selectedTextColor = MaterialTheme.colorScheme.onSurface,
-                indicatorColor = MaterialTheme.colorScheme.secondaryContainer,
+                indicatorColor = MaterialTheme.colorScheme.primaryContainer,
                 unselectedIconColor = MaterialTheme.colorScheme.onSurfaceVariant,
                 unselectedTextColor = MaterialTheme.colorScheme.onSurfaceVariant,
             )

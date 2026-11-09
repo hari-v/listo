@@ -2,6 +2,8 @@ package com.hariv.listo.ui
 
 import androidx.compose.foundation.BorderStroke
 import androidx.compose.foundation.clickable
+import androidx.compose.foundation.shape.RoundedCornerShape
+import androidx.compose.foundation.background
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
@@ -51,6 +53,7 @@ import androidx.compose.runtime.saveable.rememberSaveable
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.draw.clip
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.text.input.KeyboardCapitalization
 import androidx.compose.ui.text.input.KeyboardType
@@ -63,6 +66,7 @@ import com.hariv.listo.recurring.RepeatUnit
 import com.hariv.listo.recurring.Schedule
 import com.hariv.listo.ui.theme.ListoIcons
 import com.hariv.listo.ui.theme.categoryColor
+import com.hariv.listo.ui.theme.categoryTone
 import kotlinx.coroutines.launch
 import java.time.DayOfWeek
 import java.time.Instant
@@ -106,7 +110,7 @@ fun RecurringScreen(go: (Screen) -> Unit) {
                     contentPadding = PaddingValues(start = 16.dp, end = 16.dp, top = 16.dp, bottom = 96.dp),
                 ) {
                     itemsIndexed(list, key = { _, r -> r.id }) { index, rule ->
-                        GroupRow(index, list.size, Modifier.animateItem(), dividerInset = 16.dp) {
+                        GroupRow(index, list.size, Modifier.animateItem(), dividerInset = 68.dp) {
                             RuleRow(
                                 rule = rule,
                                 categories = categories,
@@ -143,10 +147,27 @@ private fun RuleRow(rule: Rule, categories: List<String>, onEdit: () -> Unit, on
     val schedule = remember(rule) { runCatching { rule.schedule() }.getOrNull() }
     val next = remember(rule) { schedule?.let { Recurrence.nextDue(it, rule.lastDue()) } }
     var menu by remember { mutableStateOf(false) }
+    val tone = categoryTone(categories, rule.category)
     Row(
         verticalAlignment = Alignment.CenterVertically,
-        modifier = Modifier.fillMaxWidth().clickable(onClick = onEdit).padding(start = 16.dp, end = 4.dp, top = 14.dp, bottom = 14.dp),
+        modifier = Modifier.fillMaxWidth().clickable(onClick = onEdit).padding(start = 14.dp, end = 4.dp, top = 14.dp, bottom = 14.dp),
     ) {
+        // Category-coloured tile, so rules are easy to scan by category.
+        Box(
+            contentAlignment = Alignment.Center,
+            modifier = Modifier
+                .size(40.dp)
+                .clip(RoundedCornerShape(12.dp))
+                .background(if (rule.paused) scheme.surfaceContainerHigh else tone.tint),
+        ) {
+            Icon(
+                if (rule.paused) ListoIcons.Pause else ListoIcons.Repeat,
+                contentDescription = null,
+                tint = if (rule.paused) scheme.outline else tone.text,
+                modifier = Modifier.size(20.dp),
+            )
+        }
+        Spacer(Modifier.width(14.dp))
         Column(Modifier.weight(1f)) {
             Text(rule.text, style = MaterialTheme.typography.bodyLarge, color = if (rule.paused) scheme.onSurfaceVariant else scheme.onSurface)
             Text(
@@ -163,9 +184,9 @@ private fun RuleRow(rule: Rule, categories: List<String>, onEdit: () -> Unit, on
                     Spacer(Modifier.width(5.dp))
                     Text("Paused", style = MaterialTheme.typography.labelMedium, color = scheme.outline)
                 } else if (next != null) {
-                    Icon(ListoIcons.Calendar, contentDescription = null, tint = scheme.tertiary, modifier = Modifier.size(13.dp))
+                    Icon(ListoIcons.Calendar, contentDescription = null, tint = scheme.onSurfaceVariant, modifier = Modifier.size(13.dp))
                     Spacer(Modifier.width(5.dp))
-                    Text("Next due ${Fmt.shortDate(next)}", style = MaterialTheme.typography.labelMedium, color = scheme.tertiary)
+                    Text("Next due ${Fmt.shortDate(next)}", style = MaterialTheme.typography.labelMedium, color = scheme.onSurfaceVariant)
                 }
             }
         }
@@ -320,6 +341,7 @@ fun RuleEditorScreen(ruleId: String?, back: () -> Unit) {
                     selected = category,
                     onSelect = { categoryChoice = it },
                     dotColor = { categoryColor(categories, it) },
+                    tone = { categoryTone(categories, it) },
                 )
 
                 FormLabel("Repeats")

@@ -55,6 +55,7 @@ import com.hariv.listo.App
 import com.hariv.listo.data.CategoryStore
 import com.hariv.listo.ui.theme.ListoIcons
 import com.hariv.listo.ui.theme.categoryColor
+import com.hariv.listo.ui.theme.categoryTone
 import com.hariv.listo.update.Updater
 import kotlinx.coroutines.launch
 
@@ -202,7 +203,7 @@ fun SettingsScreen(go: (Screen) -> Unit, back: () -> Unit) {
                 // ---- Backup ----
                 item(key = "backup-label") { SectionLabel("Backup") }
                 item(key = "backup-folder") {
-                    GroupRow(0, 3) {
+                    GroupRow(0, 3, dividerInset = 64.dp) {
                         InfoRow(
                             icon = ListoIcons.Folder,
                             title = "Backup folder",
@@ -214,7 +215,7 @@ fun SettingsScreen(go: (Screen) -> Unit, back: () -> Unit) {
                     }
                 }
                 item(key = "backup-last") {
-                    GroupRow(1, 3) {
+                    GroupRow(1, 3, dividerInset = 64.dp) {
                         InfoRow(
                             icon = ListoIcons.Save,
                             title = "Last backup",
@@ -238,7 +239,7 @@ fun SettingsScreen(go: (Screen) -> Unit, back: () -> Unit) {
                     }
                 }
                 item(key = "backup-restore") {
-                    GroupRow(2, 3) {
+                    GroupRow(2, 3, dividerInset = 64.dp) {
                         InfoRow(
                             icon = ListoIcons.Restore,
                             title = "Restore from backup",
@@ -252,7 +253,7 @@ fun SettingsScreen(go: (Screen) -> Unit, back: () -> Unit) {
                 // ---- Phone ----
                 item(key = "phone-label") { SectionLabel("Phone") }
                 item(key = "phone-battery") {
-                    GroupRow(0, 2) {
+                    GroupRow(0, 2, dividerInset = 64.dp) {
                         InfoRow(
                             icon = ListoIcons.Battery,
                             title = "Run in background",
@@ -262,7 +263,7 @@ fun SettingsScreen(go: (Screen) -> Unit, back: () -> Unit) {
                     }
                 }
                 item(key = "phone-widget") {
-                    GroupRow(1, 2) {
+                    GroupRow(1, 2, dividerInset = 64.dp) {
                         InfoRow(
                             icon = ListoIcons.Widget,
                             title = "Home-screen widget",
@@ -279,12 +280,12 @@ fun SettingsScreen(go: (Screen) -> Unit, back: () -> Unit) {
                 // ---- About ----
                 item(key = "about-label") { SectionLabel("About") }
                 item(key = "about-help") {
-                    GroupRow(0, 2) {
+                    GroupRow(0, 2, dividerInset = 64.dp) {
                         InfoRow(icon = ListoIcons.Help, title = "How Listo works", onClick = { go(Screen.Help) }, trailing = { Chevron() })
                     }
                 }
                 item(key = "about-update") {
-                    GroupRow(1, 2) {
+                    GroupRow(1, 2, dividerInset = 64.dp) {
                         InfoRow(
                             icon = ListoIcons.Update,
                             title = "Check for update",
@@ -356,6 +357,7 @@ fun SettingsScreen(go: (Screen) -> Unit, back: () -> Unit) {
                             selected = moveTo,
                             onSelect = { moveTo = it },
                             dotColor = { categoryColor(categories, it) },
+                            tone = { categoryTone(categories, it) },
                         )
                     } else {
                         Text("No open tasks or rules use it. Archived tasks keep their old label.")

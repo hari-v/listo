@@ -1,5 +1,18 @@
 <?xml version="1.0" encoding="utf-8"?>
 <resources>
-    <color name="ic_launcher_background">#22302D</color>
-    <color name="listo_background">#EEF0EE</color>
+    <color name="ic_launcher_background">#3155E6</color>
+    <color name="listo_background">#F2F3F7</color>
+    <!-- Widget picker preview -->
+    <color name="preview_surface">#FFFFFF</color>
+    <color name="preview_chip">#EAECF1</color>
+    <color name="preview_ink">#12151C</color>
+    <color name="preview_ink2">#555B69</color>
+    <color name="preview_primary">#3155E6</color>
+    <color name="preview_on_primary">#FFFFFF</color>
+    <color name="preview_cat1">#E8650F</color>
+    <color name="preview_cat1_ink">#A84605</color>
+    <color name="preview_cat2">#0F9960</color>
+    <color name="preview_cat2_ink">#0A6E46</color>
+    <color name="preview_cat3">#8048E0</color>
+    <color name="preview_cat3_ink">#6331C0</color>
 </resources>

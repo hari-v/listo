@@ -24,7 +24,8 @@ class App : Application() {
 
     override fun onCreate() {
         super.onCreate()
-        DailyWorker.schedule(this)
+        // Never let scheduling problems stop the app from opening.
+        runCatching { DailyWorker.schedule(this) }
     }
 
     companion object {

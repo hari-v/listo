@@ -61,6 +61,8 @@ import com.hariv.listo.data.Repository
 import com.hariv.listo.data.Todo
 import com.hariv.listo.ui.theme.ListoIcons
 import com.hariv.listo.ui.theme.categoryColor
+import com.hariv.listo.ui.theme.categoryTone
+import com.hariv.listo.ui.theme.neutralTone
 import kotlinx.coroutines.launch
 import java.time.LocalDate
 
@@ -129,7 +131,20 @@ fun TasksScreen(go: (Screen) -> Unit) {
             Row(verticalAlignment = Alignment.Top, modifier = Modifier.fillMaxWidth().padding(start = 20.dp, end = 8.dp, top = 12.dp)) {
                 Column(Modifier.weight(1f)) {
                     Text(Fmt.dayName(today), style = MaterialTheme.typography.displaySmall)
-                    Text(Fmt.dateLine(today), style = MaterialTheme.typography.bodyLarge, color = MaterialTheme.colorScheme.onSurfaceVariant)
+                    val dueNow = todos.orEmpty().count { t ->
+                        !t.done && t.dueDate != null && dueState(t.dueDate, today).let { it == DueState.Today || it == DueState.Overdue }
+                    }
+                    Row(verticalAlignment = Alignment.CenterVertically) {
+                        Text(Fmt.dateLine(today), style = MaterialTheme.typography.bodyLarge, color = MaterialTheme.colorScheme.onSurfaceVariant)
+                        if (dueNow > 0) {
+                            Spacer(Modifier.width(12.dp))
+                            Text(
+                                if (dueNow == 1) "1 due today" else "$dueNow due today",
+                                style = MaterialTheme.typography.labelLarge,
+                                color = MaterialTheme.colorScheme.error,
+                            )
+                        }
+                    }
                 }
                 IconButton(onClick = { go(Screen.Settings) }) {
                     Icon(ListoIcons.Settings, contentDescription = "Settings")
@@ -149,6 +164,7 @@ fun TasksScreen(go: (Screen) -> Unit) {
                     label = { if (it == ALL) "All" else it },
                     count = { option -> openTasks.count { option == ALL || it.category == option } },
                     dotColor = { option -> if (option == ALL) null else categoryColor(categories, option) },
+                    tone = { option -> if (option == ALL) neutralTone() else categoryTone(categories, option) },
                     contentPadding = PaddingValues(horizontal = 20.dp),
                 )
 
@@ -203,6 +219,7 @@ fun TasksScreen(go: (Screen) -> Unit) {
                             TaskRow(
                                 todo = todo,
                                 categories = categories,
+                                today = today,
                                 onToggle = { writeScope.launch { repo.toggle(todo.id) } },
                                 onCategory = { cat -> writeScope.launch { repo.setCategory(todo.id, cat) } },
                                 onDelete = { writeScope.launch { repo.delete(todo.id) } },
@@ -221,6 +238,7 @@ fun TasksScreen(go: (Screen) -> Unit) {
                                 TaskRow(
                                     todo = todo,
                                     categories = categories,
+                                    today = today,
                                     onToggle = { writeScope.launch { repo.toggle(todo.id) } },
                                     onCategory = null,
                                     onDelete = { writeScope.launch { repo.delete(todo.id) } },
@@ -257,6 +275,7 @@ fun TasksScreen(go: (Screen) -> Unit) {
 private fun TaskRow(
     todo: Todo,
     categories: List<String>,
+    today: LocalDate,
     onToggle: () -> Unit,
     onCategory: ((String) -> Unit)?,
     onDelete: () -> Unit,
@@ -266,7 +285,7 @@ private fun TaskRow(
         verticalAlignment = Alignment.CenterVertically,
         modifier = Modifier.fillMaxWidth().heightIn(min = 60.dp).padding(start = 4.dp, end = 2.dp),
     ) {
-        RoundCheck(checked = todo.done, onToggle = onToggle)
+        RoundCheck(checked = todo.done, onToggle = onToggle, tone = categoryTone(categories, todo.category))
         Column(Modifier.weight(1f).padding(vertical = 10.dp)) {
             Text(
                 text = todo.text,
@@ -279,9 +298,7 @@ private fun TaskRow(
                 CategoryTag(categories, todo.category, onCategory)
                 todo.dueDate?.let { due ->
                     Spacer(Modifier.width(14.dp))
-                    Icon(ListoIcons.Repeat, contentDescription = "Repeats", tint = scheme.tertiary, modifier = Modifier.size(13.dp))
-                    Spacer(Modifier.width(5.dp))
-                    Text("Due ${Fmt.shortDate(due)}", style = MaterialTheme.typography.labelMedium, color = scheme.tertiary)
+                    DueLabel(due, today, done = todo.done)
                 }
             }
         }
