@@ -41,6 +41,7 @@ tap() {
     # Fall back to elements whose label contains the text (merged labels like "New rule").
     [ -z "$b" ] && b=$(bounds_of "(text|content-desc)=\"[^\"]*$1[^\"]*\"")
     [ -n "$b" ] && break
+    dismiss_system_dialogs
     sleep 1
   done
   if [ -z "$b" ]; then
@@ -60,6 +61,7 @@ tap() {
 # Tap the first text field on screen.
 tap_field() {
   local b
+  dismiss_system_dialogs
   b=$(dump_ui | grep -o "<node [^>]*>" | grep 'class="android.widget.EditText"' | head -1 \
     | grep -o 'bounds="\[[0-9]*,[0-9]*\]\[[0-9]*,[0-9]*\]"' | grep -o '[0-9]\+' | tr '\n' ' ')
   if [ -z "$b" ]; then log "no text field on screen"; return 1; fi
@@ -82,10 +84,33 @@ check() {
   fi
 }
 
+# A freshly booted emulator sometimes shows "<app> isn't responding" for the launcher or a
+# system app. That dialog swallows taps and typing, so answer it with "Wait" whenever it shows.
+dismiss_system_dialogs() {
+  local i b
+  for i in 1 2 3; do
+    b=$(dump_ui | grep -o "<node [^>]*>" | grep -E '(text|content-desc)="(Wait|WAIT)"' | tail -1 \
+      | grep -o 'bounds="\[[0-9]*,[0-9]*\]\[[0-9]*,[0-9]*\]"' | grep -o '[0-9]\+' | tr '\n' ' ')
+    [ -z "$b" ] && return 0
+    log "dismissing a system 'not responding' dialog"
+    set -- $b
+    adb shell input tap $(( ($1 + $3) / 2 )) $(( ($2 + $4) / 2 ))
+    sleep 2
+  done
+}
+
 open_app() {
   adb shell am start -W -n "$PKG/.ui.MainActivity" > /dev/null 2>&1
   sleep 3
+  dismiss_system_dialogs
 }
+
+# Keep crash/ANR dialogs from popping up over the app (crashes are still logged and checked).
+adb shell settings put global hide_error_dialogs 1 > /dev/null 2>&1
+# Let the home screen finish starting before the test begins.
+adb shell input keyevent 3
+sleep 8
+dismiss_system_dialogs
 
 log "Installing $(ls -la "$APK" | awk '{print $5}') bytes"
 if ! adb install -r "$APK" > "$OUT/install.txt" 2>&1; then
