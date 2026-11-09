@@ -1,0 +1,3 @@
+[smoke] Installing 3935955 bytes
+[smoke] widget found on home page 1
+[smoke] Finished, fail=0

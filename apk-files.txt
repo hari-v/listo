@@ -1,0 +1,6 @@
+total 3860
+drwxr-xr-x 3 runner runner    4096 Nov  9 22:19 .
+drwxr-xr-x 3 runner runner    4096 Nov  9 22:19 ..
+-rw-r--r-- 1 runner runner 3935955 Nov  9 22:19 app-release.apk
+drwxr-xr-x 4 runner runner    4096 Nov  9 22:19 baselineProfiles
+-rw-r--r-- 1 runner runner     707 Nov  9 22:19 output-metadata.json
