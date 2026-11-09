@@ -22,7 +22,8 @@ shot() {
 }
 
 dump_ui() {
-  adb shell uiautomator dump /sdcard/ui.xml > /dev/null 2>&1
+  adb shell rm -f /sdcard/ui.xml > /dev/null 2>&1
+  adb shell uiautomator dump /sdcard/ui.xml > "$OUT/.last-dump.txt" 2>&1
   adb shell cat /sdcard/ui.xml 2> /dev/null
 }
 
@@ -43,7 +44,8 @@ tap() {
     sleep 1
   done
   if [ -z "$b" ]; then
-    log "could not find \"$1\" on screen"
+    log "could not find \"$1\" on screen (dump said: $(tr '\n' ' ' < "$OUT/.last-dump.txt"))"
+    dump_ui > "$OUT/ui-missing-$(echo "$1" | tr -c 'A-Za-z0-9' '_').xml"
     return 1
   fi
   set -- $b "${2:-}"
