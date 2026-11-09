@@ -92,7 +92,8 @@ fun RecurringScreen(go: (Screen) -> Unit) {
                 onClick = { go(Screen.EditRule(null)) },
                 containerColor = MaterialTheme.colorScheme.primary,
                 contentColor = MaterialTheme.colorScheme.onPrimary,
-                icon = { Icon(ListoIcons.Plus, contentDescription = null) },
+                // Material3 hides this FAB's text from TalkBack, so the icon carries the label.
+                icon = { Icon(ListoIcons.Plus, contentDescription = "New rule") },
                 text = { Text("New rule") },
             )
         },
